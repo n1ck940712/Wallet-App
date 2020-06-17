@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'walletapp/bootstrap-4.3.1-dist/css/bootstrap.css' %}">
+        <link rel="stylesheet" href="{% static 'walletapp/style.css' %}">
+        <title>{% block title %}{% endblock %}</title>
+    </head>
+    <body>
+        {% if message %}
+        <div class="alert alert-success" role="alert">
+            {{message}}
+        </div>
+        {% endif %}
+        {% block body %}
+        {% endblock %}
+        <script src="{% static 'walletapp/jquery-3.5.1/jquery.min.js' %}" charset="utf-8"></script>
+        <script src="{% static 'walletapp/app.js' %}" charset="utf-8"></script>
+    </body>
+</html>
