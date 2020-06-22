@@ -3,14 +3,58 @@
 {% block body %}
 <div class="container text-center">
     <h1>Welcome {{user.username|title}}.</h1>
-    <button class="btn btn-primary" type="button" onclick="location.href='{% url 'signout' %}'">Logout</button>
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-    <form class="form-group" action="newEntry" method="post">
+    <div class="transactionDiv">
+        {% for item in transaction %}
+        <div class="transactionDivSub">
+            <span>{{item}} ||| {{item.entryDate}} {{item.entryTime}}</span>
+            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.fromAccount}}',  '{{item.entryDate}}', '{{item.entryTime}}')">Remove</button>
+        </div>
+        <br>
+        {% endfor %}
+    </div>
+    <form class="form-group" action="addEntry" method="post">
+        {% csrf_token %}
         <label for="new_entry_amount">Amount</label>
         <input type="text" name="new_entry_amount" class="form-control" placeholder="Enter amount">
         <label for="new_entry_category">Category</label>
-        <input type="text" name="new_entry_category" class="form-control" placeholder="Category">
+        <select class="form-control" name="new_entry_category">
+            {% for item in category %}
+            <option value="{{item.category}}">{{item.category}}</option>
+            {% endfor %}
+        </select>
+        <label for="new_entry_category">From</label>
+        <select class="form-control" name="new_entry_from">
+            {% for item in accounts %}
+            <option value="{{item.accountName}}">{{item}}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary" name="button">Add</button>
     </form>
-
+    <div class="modal fade" id="indexModal" tabindex="-1" role="dialog" aria-labelledby="indexModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="indexModalLabel">Index Modal</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="deleteEntry" method="post">
+                        {% csrf_token %}
+                        <div class="inviForm"></div>
+                        Confirm delete?
+                        <button type="submit" class="btn btn-primary" name="button">Delete</button>
+                    </form>
+                    Modal body
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 {% endblock %}

@@ -8,6 +8,24 @@
         <title>{% block title %}{% endblock %}</title>
     </head>
     <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="{% url 'index' %}">WALLET</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Link1</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Link2</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'signout' %}">Logout</a>
+                    </li>
+                </ul>
+
+            </div>
+        </nav>
         {% if message %}
         <div class="alert alert-success" role="alert">
             {{message}}
@@ -17,5 +35,6 @@
         {% endblock %}
         <script src="{% static 'walletapp/jquery-3.5.1/jquery.min.js' %}" charset="utf-8"></script>
         <script src="{% static 'walletapp/app.js' %}" charset="utf-8"></script>
+        <script src="{% static 'walletapp/bootstrap-4.3.1-dist/js/bootstrap.min.js' %}" charset="utf-8"></script>
     </body>
 </html>
