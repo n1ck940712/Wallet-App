@@ -1,0 +1,19 @@
+{% extends 'walletapp/layout.html' %}
+{% block title %}Edit Entry{% endblock %}
+{% block body %}
+<div class="editEntryContainer">
+    <form class="form-group" action="editEntryConfirm" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="entry_id" value="{{chosen_entry.id}}">
+        <label for="edit_entry_amount">Amount</label>
+        <input class="form-control" type="text" name="edit_entry_amount" value="{{chosen_entry.amount}}">
+        <label for="edit_entry_category">Category</label>
+        <input class="form-control" type="text" name="edit_entry_category" value="{{chosen_entry.category}}">
+        <label for="edit_entry_from">From</label>
+        <input class="form-control" type="text" name="edit_entry_from" value="{{chosen_entry.fromAccount}}">
+        <label for="edit_entry_to">To</label>
+        <input class="form-control" type="text" name="edit_entry_to" value="{{chosen_entry.toAccount}}">
+        <button class="btn btn-success btn-sm" type="submit" name="button">Confirm</button>
+    </form>
+</div>
+{% endblock %}

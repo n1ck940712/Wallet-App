@@ -27,7 +27,7 @@ def index(request):
 
 def addEntry(request):
     if request.method == "POST":
-        new_entry = dbEntry(amount=request.POST['new_entry_amount'], category=request.POST['new_entry_category'], fromAccount=request.POST['new_entry_from'], toAccount=True)
+        new_entry = dbEntry(amount=request.POST['new_entry_amount'], category=request.POST['new_entry_category'], fromAccount=request.POST['new_entry_from'], toAccount=request.POST['new_entry_to'])
         new_entry.save()
     context = {
     "user": request.user,
@@ -40,7 +40,7 @@ def addEntry(request):
 
 def deleteEntry(request):
     if request.method == "POST":
-        del_entry = dbEntry.objects.filter(fromAccount=request.POST['del_entry_from'], entryDate=request.POST['del_entry_date'], entryTime=request.POST['del_entry_time'])[0]
+        del_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
         del_entry.delete()
     context = {
     "user": request.user,
@@ -49,6 +49,31 @@ def deleteEntry(request):
     "accounts": dbAccount.objects.all(),
     "message": None,
     }
+    return render(request, "walletapp/index.html", context)
+
+def editEntry(request):
+    if request.method == "POST":
+        context = {
+        "user": request.user,
+        "chosen_entry": dbEntry.objects.get(pk=request.POST['entry_id'])
+        }
+    return render(request, "walletapp/edit.html", context)
+
+def editEntryConfirm(request):
+    if request.method == "POST":
+        edit_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
+        edit_entry.amount = request.POST['edit_entry_amount']
+        edit_entry.category = request.POST['edit_entry_category']
+        edit_entry.fromAccount = request.POST['edit_entry_from']
+        edit_entry.toAccount = request.POST['edit_entry_to']
+        edit_entry.save()
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": dbEntry.objects.all().reverse(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
     return render(request, "walletapp/index.html", context)
 
 def signin(request):
@@ -67,3 +92,69 @@ def signin(request):
 def signout(request):
     logout(request)
     return render(request, "walletapp/login.html", {"message":"Successfully logged out."})
+
+def settingPage(request):
+    context = {
+    "user": request.user,
+    "category": dbCategory.objects.all(),
+    "transaction": dbEntry.objects.all().reverse(),
+    "accounts": dbAccount.objects.all(),
+    "message": None,
+    }
+    return render(request, "walletapp/setting.html", context)
+
+def deleteCategory(request):
+    if request.method == "POST":
+        delete_category = dbCategory.objects.get(pk=request.POST['category_id'])
+        delete_category.delete()
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": dbEntry.objects.all().reverse(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
+    return render(request, "walletapp/setting.html", context)
+
+def editCategory(request):
+    if request.method == "POST":
+        edit_category = dbCategory.objects.get(pk=request.POST['category_id'])
+        edit_category.category=request.POST['edit_category_input']
+        edit_category.save()
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": dbEntry.objects.all().reverse(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
+    return render(request, "walletapp/setting.html", context)
+
+def deleteAccount(request):
+    if request.method == "POST":
+        delete_account = dbAccount.objects.get(pk=request.POST['account_id'])
+        delete_account.delete()
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": dbEntry.objects.all().reverse(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
+    return render(request, "walletapp/setting.html", context)
+
+def editAccount(request):
+    if request.method == "POST":
+        edit_account = dbAccount.objects.get(pk=request.POST['account_id'])
+        edit_account.accountName = request.POST['edit_account_name']
+        edit_account.accountBalance = request.POST['edit_account_balance']
+        edit_account.accountType = request.POST['edit_account_type']
+        edit_account.save()
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": dbEntry.objects.all().reverse(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
+    return render(request, "walletapp/setting.html", context)
