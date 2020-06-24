@@ -7,79 +7,81 @@
 <div class="container text-center">
     <h1>Welcome {{user.username|title}}.</h1>
     <div class="transactionDiv">
-        {% for item in transaction %}
+        {% for date in transaction_date %}
         <div class="transactionDivSub">
-            <span>{{item}} ||| {{item.entryDate}} {{item.entryTime}}</span>
-            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">Details</button>
+            <h5>{{date.entryDate}}</h5>
+            {% for item in transaction %}
+                {% if item.entryDate == date.entryDate %}
+                    <div class="transactionDivSubSub" style="display:flex;">
+                        <span>{{item.category}} - ${{item.amount}} from ({{item.fromAccount}}) to ({{item.toAccount}}) | {{item.entryTime}}</span>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">Details</button>
+                    </div>
+                {% endif %}
+            {% endfor %}
         </div>
-        <br>
         {% endfor %}
     </div>
-    <div class="modal fade" id="indexModal" tabindex="-1" role="dialog" aria-labelledby="indexModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="indexModalLabel">Entry Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form action="deleteEntry" method="post">
-                        {% csrf_token %}
-                        <div class="inviForm"></div>
-                        <button type="submit" class="btn btn-danger" name="button">Delete</button>
-                    </form>
-                    <form action="editEntry" method="post">
-                        {% csrf_token %}
-                        <div class="inviForm"></div>
-                        <button type="submit" class="btn btn-primary" name="button">Edit</button>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+</div>
+<div class="modal fade" id="indexModal" tabindex="-1" role="dialog" aria-labelledby="indexModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="indexModalLabel">Entry Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="deleteEntry" method="post">
+                    {% csrf_token %}
+                    <div class="inviForm"></div>
+                    <button type="submit" class="btn btn-danger" name="button">Delete</button>
+                </form>
+                <form action="editEntry" method="post">
+                    {% csrf_token %}
+                    <div class="inviForm"></div>
+                    <button type="submit" class="btn btn-primary" name="button">Edit</button>
+                </form>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="addEntryModal" tabindex="-1" role="dialog" aria-labelledby="addEntryModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addEntryModalLabel">Add Entry</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form class="form-group" action="addEntry" method="post">
-                        {% csrf_token %}
-                        <label for="new_entry_amount">Amount</label>
-                        <input type="text" name="new_entry_amount" class="form-control" placeholder="Enter amount">
-                        <label for="new_entry_category">Category</label>
-                        <select class="form-control" name="new_entry_category">
-                            {% for item in category %}
-                            <option value="{{item.category}}">{{item.category}}</option>
-                            {% endfor %}
-                        </select>
-                        <label for="new_entry_category">From</label>
-                        <select class="form-control" name="new_entry_from">
-                            {% for item in accounts %}
-                            <option value="{{item.accountName}}">{{item.accountName}}</option>
-                            {% endfor %}
-                        </select>
-                        <label for="new_entry_category">To</label>
-                        <select class="form-control" name="new_entry_to">
-                            {% for item in accounts %}
-                            <option value="{{item.accountName}}">{{item.accountName}}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary" name="button">Add</button>
-                        </div>
-                    </form>
-                </div>
+</div>
+<div class="modal fade" id="addEntryModal" tabindex="-1" role="dialog" aria-labelledby="addEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEntryModalLabel">Add Entry</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-group" action="addEntry" method="post">
+                    {% csrf_token %}
+                    <label for="new_entry_amount">Amount</label>
+                    <input type="text" name="new_entry_amount" class="form-control" placeholder="Enter amount">
+                    <label for="new_entry_category">Category</label>
+                    <select class="form-control" name="new_entry_category">
+                        {% for item in category %}
+                        <option value="{{item.category}}">{{item.category}}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="new_entry_category">From</label>
+                    <select class="form-control" name="new_entry_from">
+                        {% for item in accounts %}
+                        <option value="{{item.accountName}}">{{item.accountName}}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="new_entry_category">To</label>
+                    <select class="form-control" name="new_entry_to">
+                        {% for item in accounts %}
+                        <option value="{{item.accountName}}">{{item.accountName}}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="new_entry_amount">Note</label>
+                    <input type="text" name="new_entry_note" class="form-control" placeholder="Note">
+                    <button type="submit" class="btn btn-primary" name="button">Add</button>
+                </form>
             </div>
         </div>
     </div>

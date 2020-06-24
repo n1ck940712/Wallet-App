@@ -13,7 +13,9 @@ urlpatterns = [
     path('settingPage', views.settingPage, name='settingPage'),
     path('deleteCategory', views.deleteCategory, name='deleteCategory'),
     path('editCategory', views.editCategory, name='editCategory'),
+    path('addCategory', views.addCategory, name='addCategory'),
     path('deleteAccount', views.deleteAccount, name='deleteAccount'),
-    path('editAccount', views.editAccount, name='editAccount')
+    path('editAccount', views.editAccount, name='editAccount'),
+    path('addAccount', views.addAccount, name='addAccount')
 
 ]

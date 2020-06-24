@@ -10,3 +10,25 @@ body{
     padding: 15px;
     margin: 0 auto;
 }
+.transactionDiv{
+    height: 60vh;
+    overflow: auto;
+}
+.addButtonContainer{
+    position: absolute;
+    right: 25px;
+    bottom: 25px;
+}
+.transactionDivSub{
+    background-color: #9e9e9e;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px;
+}
+.transactionDivSubSub{
+    justify-content: space-between;
+    background-color: #bfbfbf;
+    border-radius: 5px;
+    padding: 0px 0px 0px 8px;
+    margin: 5px;
+}

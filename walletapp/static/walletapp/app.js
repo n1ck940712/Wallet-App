@@ -15,6 +15,11 @@ function categoryDetail(category_id, category_name){
     `)
 }
 
+function addCategory(){
+    $('#edit_category_input').val()
+    $('#categoryModalbutton2').html("Add")
+}
+
 function accountDetail(account_id, account_name, account_balance, account_type){
     $('#edit_account_name').val(account_name)
     $('#edit_account_balance').val(account_balance)

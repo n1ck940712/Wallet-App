@@ -10,9 +10,10 @@ class dbEntry(models.Model):
     entryDate = models.DateField(default=now)
     fromAccount = models.CharField(max_length=64)
     toAccount = models.CharField(max_length=64)
+    entryNote = models.CharField(max_length=64, null=True)
 
     def __str__(self):
-        return f"${self.amount} ({self.category}) | from<{self.fromAccount}>to<{self.toAccount}> | {self.entryTime}-{self.entryDate}"
+        return f"${self.amount} ({self.category}) | from<{self.fromAccount}>to<{self.toAccount}> | {self.entryTime}-{self.entryDate} | {self.entryNote}"
 
 class dbAccount(models.Model):
     accountName = models.CharField(max_length=64)
