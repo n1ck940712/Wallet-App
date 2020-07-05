@@ -19,7 +19,7 @@ def index(request):
     context = {
     "user": request.user,
     "category": dbCategory.objects.all(),
-    "transaction": dbEntry.objects.all().reverse(),
+    "transaction": dbEntry.objects.order_by('entryDate').reverse(),
     "transaction_date": dbEntry.objects.values('entryDate').distinct(),
     "accounts": dbAccount.objects.all(),
     "message": None,
@@ -28,31 +28,15 @@ def index(request):
 
 def addEntry(request):
     if request.method == "POST":
-        new_entry = dbEntry(amount=request.POST['new_entry_amount'], category=request.POST['new_entry_category'], fromAccount=request.POST['new_entry_from'], toAccount=request.POST['new_entry_to'], entryNote=request.POST.get('new_entry_note'))
+        new_entry = dbEntry(amount=request.POST.get('new_entry_amount'), category=request.POST.get('new_entry_category'), fromAccount=request.POST.get('new_entry_from'), toAccount=request.POST.get('new_entry_to'), entryNote=request.POST.get('new_entry_note'), type=request.POST.get('new_entry_type'), entryDate=request.POST.get('new_entry_date'))
         new_entry.save()
-    context = {
-    "user": request.user,
-    "category": dbCategory.objects.all(),
-    "transaction": dbEntry.objects.all().reverse(),
-    "transaction_date": dbEntry.objects.values('entryDate').distinct(),
-    "accounts": dbAccount.objects.all(),
-    "message": None,
-    }
-    return render(request, "walletapp/index.html", context)
+    return HttpResponseRedirect(reverse("index"))
 
 def deleteEntry(request):
     if request.method == "POST":
         del_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
         del_entry.delete()
-    context = {
-    "user": request.user,
-    "category": dbCategory.objects.all(),
-    "transaction": dbEntry.objects.all().reverse(),
-    "transaction_date": dbEntry.objects.values('entryDate').distinct(),
-    "accounts": dbAccount.objects.all(),
-    "message": None,
-    }
-    return render(request, "walletapp/index.html", context)
+    return HttpResponseRedirect(reverse("index"))
 
 def editEntry(request):
     if request.method == "POST":
@@ -70,14 +54,7 @@ def editEntryConfirm(request):
         edit_entry.fromAccount = request.POST['edit_entry_from']
         edit_entry.toAccount = request.POST['edit_entry_to']
         edit_entry.save()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/index.html", context)
+    return HttpResponseRedirect(reverse("index"))
 
 def signin(request):
     if request.method=="POST":
@@ -110,54 +87,26 @@ def deleteCategory(request):
     if request.method == "POST":
         delete_category = dbCategory.objects.get(pk=request.POST['category_id'])
         delete_category.delete()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/setting.html", context)
+    return HttpResponseRedirect(reverse("settingPage"))
 
 def editCategory(request):
     if request.method == "POST":
         edit_category = dbCategory.objects.get(pk=request.POST['category_id'])
         edit_category.category=request.POST['edit_category_input']
         edit_category.save()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/setting.html", context)
+    return HttpResponseRedirect(reverse("settingPage"))
 
 def addCategory(request):
     if request.method == "POST":
         edit_category = dbCategory(category=request.POST['add_category_input'])
         edit_category.save()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/setting.html", context)
+    return HttpResponseRedirect(reverse("settingPage"))
 
 def deleteAccount(request):
     if request.method == "POST":
         delete_account = dbAccount.objects.get(pk=request.POST['account_id'])
         delete_account.delete()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/setting.html", context)
+    return HttpResponseRedirect(reverse("settingPage"))
 
 def editAccount(request):
     if request.method == "POST":
@@ -166,24 +115,10 @@ def editAccount(request):
         edit_account.accountBalance = request.POST['edit_account_balance']
         edit_account.accountType = request.POST['edit_account_type']
         edit_account.save()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/setting.html", context)
+    return HttpResponseRedirect(reverse("settingPage"))
 
 def addAccount(request):
     if request.method == "POST":
         edit_account = dbAccount(accountName = request.POST['add_account_name'], accountBalance = request.POST['add_account_balance'], accountType = request.POST['add_account_type'])
         edit_account.save()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.all().reverse(),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    return render(request, "walletapp/setting.html", context)
+    return HttpResponseRedirect(reverse("settingPage"))

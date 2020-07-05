@@ -1,21 +1,66 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Index Page{% endblock %}
 {% block body %}
-<div class="addButtonContainer">
-    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">+</button>
+<div class="topContainer" style="display:flex">
+    <input type="text" class="col-4 form-control" id="filterNote" placeholder="Filter Note">
+    <select class="form-control" id="filterCategory">
+        <option value="" selected>All Category</option>
+        {% for item in category %}
+        <option value="{{item.category}}">{{item.category}}</option>
+        {% endfor %}
+    </select>
+    <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">New Transaction</button>
 </div>
-<div class="container text-center">
-    <h1>Welcome {{user.username|title}}.</h1>
+<div class="container">
     <div class="transactionDiv">
         {% for date in transaction_date %}
         <div class="transactionDivSub">
-            <h5>{{date.entryDate}}</h5>
+            <div class="transactionDivSubTitle" style="display:flex;justify-content:space-between;">
+                <h4>{{date.entryDate}}</h4>
+                <span class="dailyTotal">$Total</span>
+            </div>
             {% for item in transaction %}
                 {% if item.entryDate == date.entryDate %}
-                    <div class="transactionDivSubSub" style="display:flex;">
-                        <span>{{item.category}} - ${{item.amount}} from ({{item.fromAccount}}) to ({{item.toAccount}}) | {{item.entryTime}}</span>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">Details</button>
+                    {% if item.type == 'Expense' %}
+                    <div class="transactionDivSubSub divExpense" style="display:flex;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
+                        <div class="transLeft">
+                            <span class="transType">Expense</span>:
+                            <span class="transCategory">{{item.category}}</span>
+                            (<span class="transAccount">{{item.fromAccount}}</span>)
+                            <span class="transNote">{{item.entryNote}}</span>
+                        </div>
+                        <div class="transRight">
+                            <span class="dailyAdd">{{item.amount}}</span>
+                        </div>
                     </div>
+                    {% endif %}
+                    {% if item.type == 'Income' %}
+                    <div class="transactionDivSubSub divIncome" style="display:flex;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
+                        <div class="transLeft">
+                            <span class="transType">Income</span>:
+                            <span class="transCategory">{{item.category}}</span>
+                            (<span class="transAccount">{{item.toAccount}}</span>)
+                            <span class="transNote">{{item.entryNote}}</span>
+                        </div>
+                        <div class="transRight">
+                            <span class="dailyAdd">{{item.amount}}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if item.type == 'Transfer' %}
+                    <div class="transactionDivSubSub divTransfer" style="display:flex;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
+                        <div class="transLeft">
+                            <span class="transType">Transfer</span>: from
+                            <span class="transCategory">{{item.category}}</span>
+                            (<span class="transAccount">{{item.fromAccount}}</span>) to
+                            (<span class="transAccount">{{item.toAccount}}</span>)
+                            <span class="transNote">{{item.entryNote}}</span>
+                        </div>
+                        <div class="transRight">
+                            <span class='dailyAdd'>{{item.amount}}</span>
+                        </div>
+                    </div>
+                    {% endif %}
                 {% endif %}
             {% endfor %}
         </div>
@@ -24,14 +69,14 @@
 </div>
 <div class="modal fade" id="indexModal" tabindex="-1" role="dialog" aria-labelledby="indexModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
+        <div class="modal-content text-center">
             <div class="modal-header">
                 <h5 class="modal-title" id="indexModalLabel">Entry Details</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="display:flex;margin:0 auto;">
                 <form action="deleteEntry" method="post">
                     {% csrf_token %}
                     <div class="inviForm"></div>
@@ -51,37 +96,85 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addEntryModalLabel">Add Entry</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeModal()">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <form class="form-group" action="addEntry" method="post">
-                    {% csrf_token %}
-                    <label for="new_entry_amount">Amount</label>
-                    <input type="text" name="new_entry_amount" class="form-control" placeholder="Enter amount">
-                    <label for="new_entry_category">Category</label>
-                    <select class="form-control" name="new_entry_category">
-                        {% for item in category %}
-                        <option value="{{item.category}}">{{item.category}}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="new_entry_category">From</label>
-                    <select class="form-control" name="new_entry_from">
-                        {% for item in accounts %}
-                        <option value="{{item.accountName}}">{{item.accountName}}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="new_entry_category">To</label>
-                    <select class="form-control" name="new_entry_to">
-                        {% for item in accounts %}
-                        <option value="{{item.accountName}}">{{item.accountName}}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="new_entry_amount">Note</label>
-                    <input type="text" name="new_entry_note" class="form-control" placeholder="Note">
-                    <button type="submit" class="btn btn-primary" name="button">Add</button>
-                </form>
+                <div class="tabDiv text-center">
+                    <button class="tabButton btn btn-success btn-md" onclick="openTab(event, 'incomeForm')">Income</button>
+                    <button class="tabButton btn btn-danger btn-md" onclick="openTab(event, 'expenseForm')">Expense</button>
+                    <button class="tabButton btn btn-primary btn-md" onclick="openTab(event, 'transferForm')">Transfer</button>
+                </div>
+                <div class="tabContent" id="incomeForm">
+                    <form class="form-group text-center" action="addEntry" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_entry_from" value="Null">
+                        <input type="hidden" name="new_entry_type" value="Income">
+                        <input type="text" name="new_entry_amount" class="form-control" placeholder="Amount" autocomplete="off">
+                        <select class="form-control" name="new_entry_to">
+                            <option value="" selected disabled>Account</option>
+                            {% for item in accounts %}
+                            <option value="{{item.accountName}}">{{item.accountName}}</option>
+                            {% endfor %}
+                        </select>
+                        <select class="form-control" name="new_entry_category">
+                            <option value="" selected disabled>Category</option>
+                            {% for item in category %}
+                            <option value="{{item.category}}">{{item.category}}</option>
+                            {% endfor %}
+                        </select>
+                        <input class="form-control new_entry_date" type="date" name="new_entry_date">
+                        <input type="text" name="new_entry_note" class="form-control" placeholder="Note" autocomplete="off">
+                        <button type="submit" class="btn btn-primary" name="button">Add</button>
+                    </form>
+                </div>
+                <div class="tabContent" id="expenseForm">
+                    <form class="form-group text-center" action="addEntry" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_entry_to" value="Null">
+                        <input type="hidden" name="new_entry_type" value="Expense">
+                        <input type="text" name="new_entry_amount" class="form-control" placeholder="Amount" autocomplete="off">
+                        <select class="form-control" name="new_entry_from">
+                            <option value="" selected disabled>Account</option>
+                            {% for item in accounts %}
+                            <option value="{{item.accountName}}">{{item.accountName}}</option>
+                            {% endfor %}
+                        </select>
+                        <select class="form-control" name="new_entry_category">
+                            <option value="" selected disabled>Category</option>
+                            {% for item in category %}
+                            <option value="{{item.category}}">{{item.category}}</option>
+                            {% endfor %}
+                        </select>
+                        <input class="form-control new_entry_date" type="date" name="new_entry_date">
+                        <input type="text" name="new_entry_note" class="form-control" placeholder="Note" autocomplete="off">
+                        <button type="submit" class="btn btn-primary" name="button">Add</button>
+                    </form>
+                </div>
+                <div class="tabContent" id="transferForm">
+                    <form class="form-group text-center" action="addEntry" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="new_entry_category" value="Null">
+                        <input type="hidden" name="new_entry_type" value="Transfer">
+                        <input type="text" name="new_entry_amount" class="form-control" placeholder="Amount" autocomplete="off">
+                        <select class="form-control" name="new_entry_from">
+                            <option value="" selected disabled>From</option>
+                            {% for item in accounts %}
+                            <option value="{{item.accountName}}">{{item.accountName}}</option>
+                            {% endfor %}
+                        </select>
+                        <select class="form-control" name="new_entry_to">
+                            <option value="" selected disabled>To</option>
+                            {% for item in accounts %}
+                            <option value="{{item.accountName}}">{{item.accountName}}</option>
+                            {% endfor %}
+                        </select>
+                        <input class="form-control new_entry_date" type="date" name="new_entry_date">
+                        <input type="text" name="new_entry_note" class="form-control" placeholder="Note" autocomplete="off">
+                        <button type="submit" class="btn btn-primary" name="button">Add</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

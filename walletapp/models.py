@@ -5,15 +5,16 @@ from django.utils.timezone import now
 
 class dbEntry(models.Model):
     amount = models.FloatField()
-    category = models.CharField(max_length=64)
-    entryTime = models.TimeField(default=now)
-    entryDate = models.DateField(default=now)
-    fromAccount = models.CharField(max_length=64)
-    toAccount = models.CharField(max_length=64)
+    category = models.CharField(max_length=64, null=True)
+    entryTime = models.TimeField(default=now, null=True)
+    entryDate = models.DateField(default=now, null=True)
+    fromAccount = models.CharField(max_length=64, null=True)
+    toAccount = models.CharField(max_length=64, null=True)
     entryNote = models.CharField(max_length=64, null=True)
+    type = models.CharField(max_length=64)
 
     def __str__(self):
-        return f"${self.amount} ({self.category}) | from<{self.fromAccount}>to<{self.toAccount}> | {self.entryTime}-{self.entryDate} | {self.entryNote}"
+        return f"${self.amount} ({self.category}) | from<{self.fromAccount}>to<{self.toAccount}> | {self.entryTime}-{self.entryDate} | {self.entryNote} | {self.type}"
 
 class dbAccount(models.Model):
     accountName = models.CharField(max_length=64)
