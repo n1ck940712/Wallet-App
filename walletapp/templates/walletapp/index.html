@@ -1,15 +1,37 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Index Page{% endblock %}
 {% block body %}
-<div class="topContainer" style="display:flex">
-    <input type="text" class="col-4 form-control" id="filterNote" placeholder="Filter Note">
-    <select class="form-control" id="filterCategory">
-        <option value="" selected>All Category</option>
-        {% for item in category %}
-        <option value="{{item.category}}">{{item.category}}</option>
-        {% endfor %}
-    </select>
-    <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">New Transaction</button>
+<div class="topContainer">
+    <div class="filterContainer" style="display:flex">
+        <form class="form-group col-10" action="{% url 'index' %}" method="post" style="display:flex;">
+            {% csrf_token %}
+            <input type="text" class="col-4 form-control" id="filterNote" name="filterNote" placeholder="Filter Note">
+            <select class="form-control" id="filterCategory" name="filterCategory">
+                <option value="" selected>All Category</option>
+                {% for item in category %}
+                <option value="{{item.category}}">{{item.category}}</option>
+                {% endfor %}
+            </select>
+            <select class="form-control" id="filterAccount" name="filterAccount">
+                <option value="" selected>All Accounts</option>
+                {% for item in accounts %}
+                <option value="{{item.accountName}}">{{item.accountName}}</option>
+                {% endfor %}
+            </select>
+            <select class="form-control" id="filterType" name="filterType">
+                <option value="" selected>All Transaction</option>
+                <option value="Expense">Expense</option>
+                <option value="Income">Income</option>
+                <option value="Transfer">Transfer</option>
+            </select>
+            <input type="date" class="form-control" name="filterDate" id="filterDate">
+            <button type="submit" class="btn btn-primary btn-md form-control">Filter</button>
+        </form>
+        <button class="btn btn-success btn-block" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">New Transaction</button>
+    </div>
+    <div class="clearFilter text-center">
+        <button class="btn btn-secondary btn-sm" id="clearFilterButton">Clear Filter</button>
+    </div>
 </div>
 <div class="container">
     <div class="transactionDiv">

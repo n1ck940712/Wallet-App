@@ -16,14 +16,61 @@ if superuser.count() == 0:
 def index(request):
     if not request.user.is_authenticated:
         return render(request, "walletapp/login.html", {"message": "Login first"})
-    context = {
-    "user": request.user,
-    "category": dbCategory.objects.all(),
-    "transaction": dbEntry.objects.order_by('entryDate').reverse(),
-    "transaction_date": dbEntry.objects.values('entryDate').distinct(),
-    "accounts": dbAccount.objects.all(),
-    "message": None,
-    }
+    if request.method == "GET":
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": dbEntry.objects.order_by('entryDate').reverse(),
+        "transaction_date": dbEntry.objects.values('entryDate').distinct(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
+    elif request.method == "POST":
+        filter_flag = False
+        filter_type = request.POST.get('filterType')
+        filter_category = request.POST.get('filterCategory')
+        filter_note = request.POST.get('filterNote')
+        filter_account = request.POST.get('filterAccount')
+        filter_date = request.POST.get('filterDate')
+        if filter_type != "" and filter_flag == True:
+            transaction_result = transaction_result.filter(type=filter_type)
+            filter_flag = True
+        elif filter_type != "":
+            transaction_result = dbEntry.objects.filter(type=filter_type)
+            filter_flag = True
+        if filter_category != "" and filter_flag == True:
+            transaction_result = transaction_result.filter(category=filter_category)
+            filter_flag = True
+        elif filter_category !="":
+            transaction_result = dbEntry.objects.filter(category=filter_category)
+            filter_flag = True
+        if filter_note != "" and filter_flag == True:
+            transaction_result = transaction_result.filter(entryNote=filter_note)
+            filter_flag = True
+        elif filter_note != "":
+            transaction_result = dbEntry.objects.filter(entryNote=filter_note)
+            filter_flag = True
+        if filter_account != "" and filter_flag == True:
+            transaction_result = transaction_result.filter(fromAccount=filter_account)|transaction_result.filter(toAccount=filter_account)
+            filter_flag = True
+        elif filter_account != "":
+            transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
+            filter_flag = True
+        if filter_date != "" and filter_flag == True:
+            transaction_result = transaction_result.filter(entryDate=filter_date)
+            filter_flag = True
+        elif filter_date != "":
+            transaction_result = dbEntry.objects.filter(entryDate=filter_date)
+            filter_flag = True
+
+        context = {
+        "user": request.user,
+        "category": dbCategory.objects.all(),
+        "transaction": transaction_result.order_by('entryDate').reverse(),
+        "transaction_date": transaction_result.values('entryDate').distinct(),
+        "accounts": dbAccount.objects.all(),
+        "message": None,
+        }
     return render(request, "walletapp/index.html", context)
 
 def addEntry(request):

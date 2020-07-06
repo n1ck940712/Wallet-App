@@ -5,6 +5,8 @@ $(document).ready(function (){
     getTransTotal()
 })
 
+$('#filterDate').daterangepicker();
+
 $('#addEntryButton').on('click', function(){
     var today = new Date()
     var dd = today.getDate();
@@ -20,40 +22,23 @@ $('#addEntryButton').on('click', function(){
     $(".new_entry_date").val(test)
 })
 
-$('#filterNote').on('keyup', function(){
-    filter = $(this).val().toLowerCase()
-    $('.transactionDivSubSub').find(".transNote").each(function(){
-        text = $(this).text().toLowerCase()
-        if (text.indexOf(filter)!=-1) {
-            $(this).parent('div').parent('div').show()
-        }
-        else {
-            $(this).parent('div').parent('div').hide()
-        }
+$('#clearFilterButton').on('click', function(){
+    $('#filterType').val('')
+    $('#filterAccount').val('')
+    $('#filterCategory').val('')
+    $('#filterNote').val('')
+    $('.transactionDivSubSub').each(function(){
+        $(this).show()
     })
     getTransTotal()
 
 })
 
-$('#filterCategory').change(function(){
-    filter = $(this).val()
-    $('.transactionDivSubSub').find(".transCategory").each(function(){
-        // var elementNum = $(this).parent().parent().parent()[0].childElementCount
-        if ($(this).text().indexOf(filter)!=-1) {
-            $(this).parent('div').parent('div').show()
-        }
-        else {
-            $(this).parent('div').parent('div').hide()
-        }
-    })
-    getTransTotal()
-})
-
-function getTransTotal(){
+function getTransTotal(){ //sum up total for the day
     $('.transactionDivSub').each(function(){
         var total=0;
         $(this).find(".transactionDivSubSub").each(function(){
-            if ($(this).is(':visible')) {
+            if ($(this).is(':visible')&&$(this).find('.transType').text()!="Transfer") {
                 total+=parseInt($(this)[0].children[1].children[0].innerHTML)
             }
             else {
@@ -98,3 +83,70 @@ function openTab(env, tab_name){
 function closeModal(){
     $('.tabContent').hide()
 }
+
+// $('#filterNote').on('keyup', function(){ //event listener for filter note
+//     filter = $(this).val().toLowerCase()
+//     $('.transactionDivSubSub').find(".transNote").each(function(){ //filter for transaction note
+//         text = $(this).text().toLowerCase()
+//         if (text.indexOf(filter)!=-1) {
+//             $(this).parent('div').parent('div').show()
+//         }
+//         else {
+//             $(this).parent('div').parent('div').hide()
+//         }
+//     })
+//     getTransTotal()
+//
+// })
+//
+// $('#filterCategory').change(function(){ //event listener for filter category
+//     filter = $(this).val()
+//     $('.transactionDivSubSub').find(".transCategory").each(function(){ //filter for transaction category
+//         // var elementNum = $(this).parent().parent().parent()[0].childElementCount
+//         if ($(this).text().indexOf(filter)!=-1) {
+//             $(this).parent('div').parent('div').show()
+//         }
+//         else {
+//             $(this).parent('div').parent('div').hide()
+//         }
+//     })
+//     getTransTotal()
+// })
+//
+// $('#filterAccount').change(function(){ //event listener for filter account
+//     filter = $(this).val()
+//     $('.transactionDivSubSub').find(".transAccount").each(function(){ //filter for account
+//         if ($(this).text().indexOf(filter)!=-1) {
+//             $(this).parent('div').parent('div').show()
+//         }
+//         else {
+//             $(this).parent('div').parent('div').hide()
+//         }
+//     })
+//     getTransTotal()
+// })
+//
+// $('#filterType').change(function(){ //event listener for filter Type
+//     filter_type = $(this).val()
+//     filter_note = $('#filterNote').val()
+//     filter_account = $('#filterAccount').val()
+//     filter_category = $('#filterCategory').val()
+//     $('.transactionDivSubSub').find(".transType").each(function(){ //filter for transaction type
+//         if ($(this).text().indexOf(filter_type)!=-1) {
+//             $(this).parent('div').parent('div').show()
+//         }
+//         else {
+//             $(this).parent('div').parent('div').hide()
+//         }
+//     })
+//     $('.transactionDivSubSub').find(".transNote").each(function(){ //filter for transaction note
+//         text = $(this).text().toLowerCase()
+//         if (text.indexOf(filter_note)!=-1) {
+//             $(this).parent('div').parent('div').show()
+//         }
+//         else {
+//             $(this).parent('div').parent('div').hide()
+//         }
+//     })
+//     getTransTotal()
+// })

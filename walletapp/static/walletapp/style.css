@@ -39,3 +39,6 @@ body{
     padding:10px;
     display: none;
 }
+.topContainer{
+    margin-top:10px;
+}
