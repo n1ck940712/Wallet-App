@@ -20,8 +20,8 @@ def index(request):
         context = {
         "user": request.user,
         "category": dbCategory.objects.all(),
-        "transaction": dbEntry.objects.order_by('entryDate').reverse(),
-        "transaction_date": dbEntry.objects.values('entryDate').distinct(),
+        "transaction": dbEntry.objects.order_by('-entryDate'),
+        "transaction_date": dbEntry.objects.order_by('-entryDate').distinct('entryDate'),
         "accounts": dbAccount.objects.all(),
         "message": None,
         }
@@ -31,7 +31,8 @@ def index(request):
         filter_category = request.POST.get('filterCategory')
         filter_note = request.POST.get('filterNote')
         filter_account = request.POST.get('filterAccount')
-        filter_date = request.POST.get('filterDate')
+        filter_date_start = request.POST.get('filterDateStart')
+        filter_date_end = request.POST.get('filterDateEnd')
         if filter_type != "" and filter_flag == True:
             transaction_result = transaction_result.filter(type=filter_type)
             filter_flag = True
@@ -56,17 +57,26 @@ def index(request):
         elif filter_account != "":
             transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
             filter_flag = True
-        if filter_date != "" and filter_flag == True:
-            transaction_result = transaction_result.filter(entryDate=filter_date)
-            filter_flag = True
-        elif filter_date != "":
-            transaction_result = dbEntry.objects.filter(entryDate=filter_date)
-            filter_flag = True
-
+        # Date filtering
+        if filter_date_end == filter_date_start and filter_date_start != "":
+            if filter_flag == True:
+                transaction_result = transaction_result.filter(entryDate=filter_date_start)
+                filter_flag = True
+            else:
+                transaction_result = dbEntry.objects.filter(entryDate=filter_date_start)
+                filter_flag = True
+        elif filter_date_end != filter_date_start:
+            if filter_flag == True:
+                transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
+            else:
+                transaction_result = dbEntry.objects.filter(entryDate__range=[filter_date_start, filter_date_end])
+                filter_flag = True
+        if filter_flag == False:
+            transaction_result = dbEntry.objects.all()
         context = {
         "user": request.user,
         "category": dbCategory.objects.all(),
-        "transaction": transaction_result.order_by('entryDate').reverse(),
+        "transaction": transaction_result.order_by('-entryDate'),
         "transaction_date": transaction_result.values('entryDate').distinct(),
         "accounts": dbAccount.objects.all(),
         "message": None,

@@ -2,37 +2,53 @@ $(document).ready(function (){
     // console.log("loaded")
     // console.log($('.dailyTotal')[0])
     // console.log($('.dailyAdd')[0])
-    getTransTotal()
-})
 
-$('#filterDate').daterangepicker();
+    getTransTotal() //calculate daily total
 
-$('#addEntryButton').on('click', function(){
-    var today = new Date()
-    var dd = today.getDate();
-    var mm = today.getMonth()+1;
-    var yy = today.getFullYear();
-    if (mm<10) {
-        mm = '0'+mm;
-    }
-    if (dd<10) {
-        dd = '0'+dd;
-    }
-    var test = (yy + '-' + mm + '-' + dd)
-    $(".new_entry_date").val(test)
-})
+    $('#filterDate').daterangepicker({
+         "opens": "left"
+    });
+    $('#filterDate').on('apply.daterangepicker', function(ev, picker) {
+        $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
+        $('#filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
+    });
+    $('#filterDate').on('show.daterangepicker', function(ev, picker) {
+        $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
+        $('#filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
+    });
 
-$('#clearFilterButton').on('click', function(){
-    $('#filterType').val('')
-    $('#filterAccount').val('')
-    $('#filterCategory').val('')
-    $('#filterNote').val('')
-    $('.transactionDivSubSub').each(function(){
-        $(this).show()
+    $('#addEntryButton').on('click', function(){
+        console.log(moment().date()+"/"+moment().month()+"/"+moment().year())
+        var dd = moment().date();
+        var mm = moment().month()+1;
+        var yy = moment().year();
+        if (mm<10) {
+            mm = '0'+mm;
+        }
+        if (dd<10) {
+            dd = '0'+dd;
+        }
+        var test = (yy + '-' + mm + '-' + dd)
+        $(".new_entry_date").val(test)
     })
-    getTransTotal()
+
+    $('#clearFilterButton').on('click', function(){
+        $('#filterType').val('')
+        $('#filterAccount').val('')
+        $('#filterCategory').val('')
+        $('#filterNote').val('')
+        $('.transactionDivSubSub').each(function(){
+            $(this).show()
+        })
+        getTransTotal()
+
+    })
 
 })
+
+
+
+
 
 function getTransTotal(){ //sum up total for the day
     $('.transactionDivSub').each(function(){
