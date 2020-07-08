@@ -75,9 +75,22 @@ WSGI_APPLICATION = 'wallet.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    # }
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'dvj788m40e32r',
+
+        'USER': 'ptuwqknyuxftdx',
+
+        'PASSWORD': '518ac9175584c134b37ad1e8d961728c9421e58d1e5a60e39feca9637c7855ec',
+
+        'HOST': 'ec2-34-225-82-212.compute-1.amazonaws.com',
+
+        'PORT': '5432',
     }
 }
 

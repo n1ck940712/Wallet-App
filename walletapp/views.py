@@ -77,7 +77,7 @@ def index(request):
         "user": request.user,
         "category": dbCategory.objects.all(),
         "transaction": transaction_result.order_by('-entryDate'),
-        "transaction_date": transaction_result.values('entryDate').distinct(),
+        "transaction_date": transaction_result.order_by('-entryDate').distinct('entryDate'),
         "accounts": dbAccount.objects.all(),
         "message": None,
         }
