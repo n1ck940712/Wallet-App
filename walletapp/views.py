@@ -19,7 +19,7 @@ def index(request):
     if request.method == "GET":
         context = {
         "user": request.user,
-        "category": dbCategory.objects.all(),
+        "category": dbCategory.objects.all().order_by("category"),
         "transaction": dbEntry.objects.order_by('-entryDate'),
         "transaction_date": dbEntry.objects.order_by('-entryDate').distinct('entryDate'),
         "accounts": dbAccount.objects.all(),
@@ -75,23 +75,68 @@ def index(request):
             transaction_result = dbEntry.objects.all()
         context = {
         "user": request.user,
-        "category": dbCategory.objects.all(),
+        "category": dbCategory.objects.all().order_by("category"),
         "transaction": transaction_result.order_by('-entryDate'),
         "transaction_date": transaction_result.order_by('-entryDate').distinct('entryDate'),
-        "accounts": dbAccount.objects.all(),
+        "accounts": dbAccount.objects.all().order_by("accountName"),
         "message": None,
         }
     return render(request, "walletapp/index.html", context)
 
+def overview(request):
+    context = {
+    "user": request.user,
+    "accounts": dbAccount.objects.all().order_by("accountName"),
+    "message": None,
+    }
+    return render(request, "walletapp/overview.html", context)
+
 def addEntry(request):
     if request.method == "POST":
-        new_entry = dbEntry(amount=request.POST.get('new_entry_amount'), category=request.POST.get('new_entry_category'), fromAccount=request.POST.get('new_entry_from'), toAccount=request.POST.get('new_entry_to'), entryNote=request.POST.get('new_entry_note'), type=request.POST.get('new_entry_type'), entryDate=request.POST.get('new_entry_date'))
+        new_entry_type = request.POST.get('new_entry_type')
+        new_entry_from = request.POST.get('new_entry_from')
+        new_entry_to = request.POST.get('new_entry_to')
+        new_entry_note = request.POST.get('new_entry_note')
+        new_entry_date = request.POST.get('new_entry_date')
+        new_entry_category = request.POST.get('new_entry_category')
+        new_entry_amount = request.POST.get('new_entry_amount')
+        if new_entry_type=="Expense":
+            get_account = dbAccount.objects.get(accountName=new_entry_from)
+            get_account.accountBalance=str(float(get_account.accountBalance)-float(new_entry_amount))
+            get_account.save()
+        if new_entry_type=="Income":
+            get_account = dbAccount.objects.get(accountName=new_entry_to)
+            get_account.accountBalance=str(float(get_account.accountBalance)+float(new_entry_amount))
+            get_account.save()
+        if new_entry_type=="Transfer":
+            get_account_from = dbAccount.objects.get(accountName=new_entry_from)
+            get_account_to = dbAccount.objects.get(accountName=new_entry_to)
+            get_account_from.accountBalance=str(float(get_account_from.accountBalance)-float(new_entry_amount))
+            get_account_to.accountBalance=str(float(get_account_to.accountBalance)+float(new_entry_amount))
+            get_account_to.save()
+            get_account_from.save()
+        new_entry = dbEntry(amount=new_entry_amount, category=new_entry_category, fromAccount=new_entry_from, toAccount=new_entry_to, entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         new_entry.save()
     return HttpResponseRedirect(reverse("index"))
 
 def deleteEntry(request):
     if request.method == "POST":
         del_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
+        if del_entry.type=="Expense":
+            get_account = dbAccount.objects.get(accountName=del_entry.fromAccount)
+            get_account.accountBalance=str(float(get_account.accountBalance)+float(del_entry.amount))
+            get_account.save()
+        if del_entry.type=="Income":
+            get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
+            get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
+            get_account.save()
+        if del_entry.type=="Transfer":
+            get_account_from = dbAccount.objects.get(accountName=del_entry.fromAccount)
+            get_account_to = dbAccount.objects.get(accountName=del_entry.toAccount)
+            get_account_from.accountBalance=str(float(get_account_from.accountBalance)+float(del_entry.amount))
+            get_account_to.accountBalance=str(float(get_account_to.accountBalance)-float(del_entry.amount))
+            get_account_to.save()
+            get_account_from.save()
         del_entry.delete()
     return HttpResponseRedirect(reverse("index"))
 
@@ -99,18 +144,85 @@ def editEntry(request):
     if request.method == "POST":
         context = {
         "user": request.user,
-        "chosen_entry": dbEntry.objects.get(pk=request.POST['entry_id'])
+        "chosen_entry": dbEntry.objects.get(pk=request.POST['entry_id']),
+        "category": dbCategory.objects.all().order_by("category"),
+        "accounts": dbAccount.objects.all().order_by("accountName"),
         }
     return render(request, "walletapp/edit.html", context)
 
 def editEntryConfirm(request):
     if request.method == "POST":
-        edit_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
-        edit_entry.amount = request.POST['edit_entry_amount']
-        edit_entry.category = request.POST['edit_entry_category']
-        edit_entry.fromAccount = request.POST['edit_entry_from']
-        edit_entry.toAccount = request.POST['edit_entry_to']
-        edit_entry.save()
+        edit_entry_amount = request.POST.get('edit_entry_amount')
+        edit_entry_category = request.POST.get('edit_entry_category')
+        edit_entry_from = request.POST.get('edit_entry_from')
+        edit_entry_to = request.POST.get('edit_entry_to')
+        edit_entry_note= request.POST.get('edit_entry_note')
+        old_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
+        if old_entry.amount != float(edit_entry_amount):
+            print("amount change")
+            if old_entry.type == "Expense":
+                get_account = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                amount_diff = float(edit_entry_amount)-float(old_entry.amount)
+                get_account.accountBalance = str(float(get_account.accountBalance)-amount_diff)
+                get_account.save()
+            if old_entry.type == "Income":
+                get_account = dbAccount.objects.get(accountName=old_entry.toAccount)
+                amount_diff = float(edit_entry_amount)-float(old_entry.amount)
+                get_account.accountBalance = str(float(get_account.accountBalance)+amount_diff)
+                get_account.save()
+            if old_entry.type == "Transfer":
+                get_account_from = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                get_account_to = dbAccount.objects.get(accountName=old_entry.toAccount)
+                amount_diff = float(edit_entry_amount)-float(old_entry.amount)
+                get_account_from.accountBalance = str(float(get_account_from.accountBalance) - amount_diff)
+                get_account_to.accountBalance = str(float(get_account_to.accountBalance) + amount_diff)
+                get_account_from.save()
+                get_account_to.save()
+            old_entry.amount = edit_entry_amount
+        if old_entry.category != edit_entry_category:
+            print("category change")
+            old_entry.category = edit_entry_category
+        if old_entry.fromAccount != edit_entry_from:
+            print("from account change")
+            if old_entry.type == "Expense":
+                get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                get_account_new = dbAccount.objects.get(accountName=edit_entry_from)
+                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) + float(edit_entry_amount))
+                get_account_new.accountBalance = str(float(get_account_new.accountBalance) - float(edit_entry_amount))
+                get_account_ori.save()
+                get_account_new.save()
+            old_entry.fromAccount = edit_entry_from
+            if old_entry.type == "Transfer":
+                get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                get_account_new = dbAccount.objects.get(accountName=edit_entry_from)
+                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) + float(edit_entry_amount))
+                get_account_new.accountBalance = str(float(get_account_new.accountBalance) - float(edit_entry_amount))
+                get_account_ori.save()
+                get_account_new.save()
+            old_entry.fromAccount = edit_entry_from
+        if old_entry.toAccount != edit_entry_to:
+            print(old_entry.toAccount)
+            print(edit_entry_to)
+            print("to account change")
+            if old_entry.type == "Income":
+                get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                get_account_new = dbAccount.objects.get(accountName=edit_entry_to)
+                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) - float(edit_entry_amount))
+                get_account_new.accountBalance = str(float(get_account_new.accountBalance) + float(edit_entry_amount))
+                get_account_ori.save()
+                get_account_new.save()
+            if old_entry.type == "Transfer":
+                get_account_ori = dbAccount.objects.get(accountName=old_entry.toAccount)
+                get_account_new = dbAccount.objects.get(accountName=edit_entry_to)
+                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) - float(edit_entry_amount))
+                get_account_new.accountBalance = str(float(get_account_new.accountBalance) + float(edit_entry_amount))
+                get_account_ori.save()
+                get_account_new.save()
+            old_entry.toAccount = edit_entry_to
+        if old_entry.entryNote != edit_entry_note:
+            print("note change")
+            old_entry.entryNote = edit_entry_note
+        old_entry.save()
     return HttpResponseRedirect(reverse("index"))
 
 def signin(request):
@@ -133,9 +245,10 @@ def signout(request):
 def settingPage(request):
     context = {
     "user": request.user,
-    "category": dbCategory.objects.all(),
+    "category": dbCategory.objects.all().order_by("category"),
     "transaction": dbEntry.objects.all().reverse(),
-    "accounts": dbAccount.objects.all(),
+    "accounts": dbAccount.objects.all().order_by("accountName"),
+    "accountTypes": dbAccount.objects.distinct('accountType').order_by('accountType'),
     "message": None,
     }
     return render(request, "walletapp/setting.html", context)

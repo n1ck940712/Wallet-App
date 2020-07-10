@@ -41,3 +41,10 @@ body{
 .topContainer{
     margin-top:10px;
 }
+
+.accountDiv{
+    background-color: #7bbf71;
+    border: none;
+    border-radius: 5px;
+    margin: 5px;
+}

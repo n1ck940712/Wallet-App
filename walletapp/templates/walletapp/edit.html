@@ -5,14 +5,87 @@
     <form class="form-group" action="editEntryConfirm" method="post">
         {% csrf_token %}
         <input type="hidden" name="entry_id" value="{{chosen_entry.id}}">
-        <label for="edit_entry_amount">Amount</label>
-        <input class="form-control" type="text" name="edit_entry_amount" value="{{chosen_entry.amount}}">
-        <label for="edit_entry_category">Category</label>
-        <input class="form-control" type="text" name="edit_entry_category" value="{{chosen_entry.category}}">
-        <label for="edit_entry_from">From</label>
-        <input class="form-control" type="text" name="edit_entry_from" value="{{chosen_entry.fromAccount}}">
-        <label for="edit_entry_to">To</label>
-        <input class="form-control" type="text" name="edit_entry_to" value="{{chosen_entry.toAccount}}">
+        {% if chosen_entry.type == "Expense" %}
+            <input type="hidden" name="edit_entry_to" value="{{chosen_entry.toAccount}}">
+            <label for="edit_entry_amount">Amount</label>
+            <input class="form-control" type="text" name="edit_entry_amount" value="{{chosen_entry.amount}}">
+            <label for="edit_entry_from">Account</label>
+            <select class="form-control" name="edit_entry_from">
+                {% for item in accounts %}
+                    {% if item.accountName == chosen_entry.fromAccount %}
+                    <option value="{{item.accountName}}" selected>{{item.accountName}}</option>
+                    {% else %}
+                    <option value="{{item.accountName}}">{{item.accountName}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="edit_entry_category">Category</label>
+            <select class="form-control" name="edit_entry_category">
+                {% for item in category %}
+                    {% if item.category == chosen_entry.category %}
+                    <option value="{{item.category}}" selected>{{item.category}}</option>
+                    {% else %}
+                    <option value="{{item.category}}">{{item.category}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="edit_entry_note">Note</label>
+            <input class="form-control" type="text" name="edit_entry_note" value="{{chosen_entry.entryNote}}">
+        {% endif %}
+        {% if chosen_entry.type == "Income" %}
+            <input type="hidden" name="edit_entry_from" value="{{chosen_entry.fromAccount}}">
+            <label for="edit_entry_amount">Amount</label>
+            <input class="form-control" type="text" name="edit_entry_amount" value="{{chosen_entry.amount}}">
+            <label for="edit_entry_to">Account</label>
+            <select class="form-control" name="edit_entry_to">
+                {% for item in accounts %}
+                    {% if item.accountName == chosen_entry.toAccount %}
+                    <option value="{{item.accountName}}" selected>{{item.accountName}}</option>
+                    {% else %}
+                    <option value="{{item.accountName}}">{{item.accountName}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="edit_entry_category">Category</label>
+            <select class="form-control" name="edit_entry_category">
+                {% for item in category %}
+                    {% if item.category == chosen_entry.category %}
+                    <option value="{{item.category}}" selected>{{item.category}}</option>
+                    {% else %}
+                    <option value="{{item.category}}">{{item.category}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="edit_entry_note">Note</label>
+            <input class="form-control" type="text" name="edit_entry_note" value="{{chosen_entry.entryNote}}">
+        {% endif %}
+        {% if chosen_entry.type == "Transfer" %}
+            <input type="hidden" name="edit_entry_category" value="{{chosen_entry.category}}">
+            <label for="edit_entry_amount">Amount</label>
+            <input class="form-control" type="text" name="edit_entry_amount" value="{{chosen_entry.amount}}">
+            <label for="edit_entry_category">From</label>
+            <select class="form-control transferFrom" name="edit_entry_from">
+                {% for item in accounts %}
+                    {% if item.accountName == chosen_entry.fromAccount %}
+                    <option value="{{item.accountName}}" selected>{{item.accountName}}</option>
+                    {% else %}
+                    <option value="{{item.accountName}}">{{item.accountName}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="edit_entry_from">To</label>
+            <select class="form-control transferTo" name="edit_entry_to">
+                {% for item in accounts %}
+                    {% if item.accountName == chosen_entry.toAccount %}
+                    <option value="{{item.accountName}}" selected>{{item.accountName}}</option>
+                    {% else %}
+                    <option value="{{item.accountName}}">{{item.accountName}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <label for="edit_entry_note">Note</label>
+            <input class="form-control" type="text" name="edit_entry_note" value="{{chosen_entry.entryNote}}">
+        {% endif %}
         <button class="btn btn-success btn-sm" type="submit" name="button">Confirm</button>
     </form>
 </div>

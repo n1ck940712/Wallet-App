@@ -97,7 +97,12 @@
                     <label for="edit_account_balance">Account Balance</label>
                     <input type="text" class="form-control" name="edit_account_balance" id="edit_account_balance">
                     <label for="edit_account_type">Account Type</label>
-                    <input type="text" class="form-control" name="edit_account_type" id="edit_account_type">
+                    <!-- <input type="text" class="form-control" name="edit_account_type" id="edit_account_type"> -->
+                    <select class="form-control" name="edit_account_type" id="edit_account_type">
+                        {% for item in accountTypes %}
+                            <option value="">{{item.accountType}}</option>
+                        {% endfor %}
+                    </select>
                     <button type="submit" class="btn btn-primary" name="button">Edit</button>
                 </form>
             </div>

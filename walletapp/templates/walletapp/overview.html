@@ -1,0 +1,44 @@
+{% extends 'walletapp/layout.html' %}
+{% block title %}Overview{% endblock %}
+{% block body %}
+
+<div class="overviewContainer" style="display:flex;">
+    {% for item in accounts %}
+    <div class="accountDiv text-center col-4" data-toggle="modal" data-target="#editAccountModal">
+        <h4>{{item.accountName}}</h4>
+        <span>Type: </span><span>{{item.accountType}}</span><br>
+        <span>Balance: </span><span>{{item.accountBalance}}</span>
+    </div>
+    {% endfor %}
+</div>
+<!-- <div class="modal fade" id="editAccountModal" tabindex="-1" role="dialog" aria-labelledby="editAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAccountModalLabel">Edit Account</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeModal()" name="button"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="tabDiv text-center">
+                    <button class="tabButton btn btn-success btn-md" onclick="editAccount(event, 'editAccountForm')">Edit</button>
+                </div>
+                <div class="tabContent" id="editAccountForm">
+                    <form class="form-group text-center" action="editAccount" method="post">
+                        {% csrf_token %}
+                        <input type="text" name="edit_account_name" class="form-control" autocomplete="off">
+                        <select class="form-control" name="edit_account_type">
+                            <option value="" selected>account type</option>
+                        </select>
+                        <input class="form-control" type="text" name="edit_account_balance">
+                        <button type="submit" class="btn btn-primary" name="button">Confirm</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+ -->
+</div>
+
+{% endblock %}

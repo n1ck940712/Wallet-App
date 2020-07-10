@@ -5,7 +5,7 @@
     <div class="filterContainer" style="display:flex">
         <form class="form-group col-10" action="{% url 'index' %}" method="post" style="display:flex;">
             {% csrf_token %}
-            <input type="text" class="col-2 form-control" id="filterNote" name="filterNote" placeholder="Filter Note">
+            <input type="text" class="col-2 form-control" id="filterNote" name="filterNote" placeholder="Filter Note" autocomplete="off">
             <select class="form-control" id="filterCategory" name="filterCategory">
                 <option value="" selected>All Category</option>
                 {% for item in category %}
@@ -37,8 +37,11 @@
 </div>
 <div class="container">
     <div class="transactionDiv">
-        <!-- {{transaction_date}} -->
-        <!-- {{transaction}} -->
+        {% if not transaction_date %}
+        <div class="transactionDivSub text-center">
+            <h2>No entry matches filter criteria.</h2>
+        </div>
+        {% endif %}
         {% for date in transaction_date %}
         <div class="transactionDivSub">
             <div class="transactionDivSubTitle" style="display:flex;justify-content:space-between;">
@@ -48,7 +51,7 @@
             {% for item in transaction %}
                 {% if item.entryDate == date.entryDate %}
                     {% if item.type == 'Expense' %}
-                    <div class="transactionDivSubSub divExpense" style="display:flex;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
+                    <div class="transactionDivSubSub divExpense " style="display:flex; cursor:pointer;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
                         <div class="transLeft">
                             <span class="transType">Expense</span>:
                             <span class="transCategory">{{item.category}}</span>
@@ -61,7 +64,7 @@
                     </div>
                     {% endif %}
                     {% if item.type == 'Income' %}
-                    <div class="transactionDivSubSub divIncome" style="display:flex;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
+                    <div class="transactionDivSubSub divIncome" style="display:flex; cursor:pointer;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
                         <div class="transLeft">
                             <span class="transType">Income</span>:
                             <span class="transCategory">{{item.category}}</span>
@@ -74,7 +77,7 @@
                     </div>
                     {% endif %}
                     {% if item.type == 'Transfer' %}
-                    <div class="transactionDivSubSub divTransfer" style="display:flex;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
+                    <div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="{{item.id}}" data-toggle="modal" data-target="#indexModal" onclick="functionA('{{item.id}}')">
                         <div class="transLeft">
                             <span class="transType">Transfer</span>: from
                             <span class="transCategory">{{item.category}}</span>
@@ -103,16 +106,16 @@
                 </button>
             </div>
             <div class="modal-body" style="display:flex;margin:0 auto;">
-                <form action="deleteEntry" method="post">
+                <form id="deleteEntryForm" action="deleteEntry" method="post">
                     {% csrf_token %}
                     <div class="inviForm"></div>
-                    <button type="submit" class="btn btn-danger" name="button">Delete</button>
                 </form>
-                <form action="editEntry" method="post">
+                <form id="editEntryForm" action="editEntry" method="post">
                     {% csrf_token %}
                     <div class="inviForm"></div>
-                    <button type="submit" class="btn btn-primary" name="button">Edit</button>
                 </form>
+                <button type="submit" class="entryDeleteButton btn btn-danger" form="deleteEntryForm" style="margin:0px 15px 0px 15px">Delete</button>
+                <button type="submit" class="entryEditButton btn btn-primary" form="editEntryForm" style="margin:0px 15px 0px 15px">Edit</button>
             </div>
         </div>
     </div>
@@ -181,7 +184,7 @@
                 <div class="tabContent" id="transferForm">
                     <form class="form-group text-center" action="addEntry" method="post">
                         {% csrf_token %}
-                        <input type="hidden" name="new_entry_category" value="Null">
+                        <input type="hidden" name="new_entry_category" value="Expense">
                         <input type="hidden" name="new_entry_type" value="Transfer">
                         <input type="text" name="new_entry_amount" class="form-control" placeholder="Amount" autocomplete="off">
                         <select class="form-control" name="new_entry_from">
