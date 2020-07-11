@@ -1,9 +1,11 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from .models import dbEntry, dbCategory, dbAccount, dbAccountType
+from django.core import serializers
+
 # Create your views here.
 
 superuser = User.objects.filter(is_superuser=True)
@@ -84,12 +86,71 @@ def index(request):
     return render(request, "walletapp/index.html", context)
 
 def overview(request):
+    if request.method=="GET":
+        filtered_transaction = dbEntry.objects.all().order_by('-entryDate')
+    if request.method=="POST":
+        selected_account = request.POST.get('filterAccount')
+        filter_date_start = request.POST.get('filterDateStart')
+        filter_date_end = request.POST.get('filterDateEnd')
+        filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
+        filtered_transaction = filtered_transaction.filter(entryDate__range=[filter_date_start, filter_date_end])
+
+    total_change = float(0) ####total change calculation
+    total_income = float(0)
+    total_expense = float(0)
+    total_transfer = float(0)
+    for item in filtered_transaction:
+        if item.type == "Income":
+            total_change += float(item.amount)
+            total_income += float(item.amount)
+        if item.type == "Expense":
+            total_change -= float(item.amount)
+            total_expense += float(item.amount)
+        if item.type == "Transfer":
+            total_transfer += float(item.amount)
+
+    print(filtered_transaction)
     context = {
     "user": request.user,
     "accounts": dbAccount.objects.all().order_by("accountName"),
+    "transaction": filtered_transaction,
+    "total_change": total_change,
+    "total_income": total_income,
+    "total_expense": total_expense,
+    "total_transfer": total_transfer,
     "message": None,
     }
     return render(request, "walletapp/overview.html", context)
+
+def overviewAjax(request):
+    selected_account = request.GET.get('selected_account')
+    filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
+    print(filtered_transaction)
+
+    total_change = float(0) ####total change calculation
+    total_income = float(0)
+    total_expense = float(0)
+    total_transfer = float(0)
+    for item in filtered_transaction:
+        if item.type == "Income":
+            total_change += float(item.amount)
+            total_income += float(item.amount)
+        if item.type == "Expense":
+            total_change -= float(item.amount)
+            total_expense += float(item.amount)
+        if item.type == "Transfer":
+            total_transfer += float(item.amount)
+
+    filtered_transaction = serializers.serialize("json", filtered_transaction)
+    # filtered_transaction = list(filtered_transaction)
+    context = {
+    "transaction": filtered_transaction,
+    "total_change": total_change,
+    "total_income": total_income,
+    "total_expense": total_expense,
+    "total_transfer": total_transfer,
+    }
+    return JsonResponse(context, content_type="application/json", safe=False)
 
 def addEntry(request):
     if request.method == "POST":

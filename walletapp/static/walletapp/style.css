@@ -44,7 +44,19 @@ body{
 
 .accountDiv{
     background-color: #7bbf71;
-    border: none;
+    border-radius: 5px;
+    margin: 5px;
+}
+
+.summaryContainer{
+    background-color: #9e9e9e;
+    border-radius: 5px;
+    margin: 5px;
+    padding: 5px;
+}
+
+.summaryContainerSub{
+    background-color: #74757a;
     border-radius: 5px;
     margin: 5px;
 }

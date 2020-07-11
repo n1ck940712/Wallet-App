@@ -41,9 +41,24 @@ $(document).ready(function (){
             $(this).show()
         })
         getTransTotal()
-
     })
 
+    $('.accountDiv').click(function(){
+        $.ajax({
+            type: 'GET',
+            url: 'overviewAjax',
+            data: {
+                "selected_account": $(this).attr('id')
+            },
+            success: function(data) {
+                console.log(data);
+                $('#totalIncome').text("$ "+data.total_income)
+                $('#totalExpense').text("$ "+data.total_expense)
+                $('#totalChange').text("$ "+data.total_change)
+                $('#totalTransfer').text("$ "+data.total_transfer)
+            }
+        })
+    })
 })
 
 
