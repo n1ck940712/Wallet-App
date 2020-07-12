@@ -122,10 +122,10 @@ def overview(request):
     }
     return render(request, "walletapp/overview.html", context)
 
+# testing ajax requests
 def overviewAjax(request):
-    selected_account = request.GET.get('selected_account')
-    filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
-    print(filtered_transaction)
+    # selected_account = request.GET.get('selected_account')
+    filtered_transaction = (dbEntry.objects.filter(toAccount="Wallet") | dbEntry.objects.filter(fromAccount="Wallet")).order_by('-entryDate')
 
     total_change = float(0) ####total change calculation
     total_income = float(0)
@@ -142,7 +142,6 @@ def overviewAjax(request):
             total_transfer += float(item.amount)
 
     filtered_transaction = serializers.serialize("json", filtered_transaction)
-    # filtered_transaction = list(filtered_transaction)
     context = {
     "transaction": filtered_transaction,
     "total_change": total_change,

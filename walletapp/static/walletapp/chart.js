@@ -22,25 +22,6 @@ var barChartData = {
 
 };
 
-window.onload = function() {
-    var ctx = document.getElementById('expenseChart').getContext('2d');
-    window.myChart = new Chart(ctx, {
-        type: 'bar',
-        data: barChartData,
-        options: {
-            responsive: true,
-            title: {
-                display: true,
-                text: 'Expense'
-            },
-            tooltips: {
-                mode: 'point'
-            }
-        }
-    });
-};
-
-
 var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 var config = {
     type: 'line',

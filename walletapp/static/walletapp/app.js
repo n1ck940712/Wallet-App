@@ -43,7 +43,7 @@ $(document).ready(function (){
         getTransTotal()
     })
 
-    $('.accountDiv').click(function(){
+    $('#ajaxButton').click(function(){
         $.ajax({
             type: 'GET',
             url: 'overviewAjax',
@@ -51,11 +51,25 @@ $(document).ready(function (){
                 "selected_account": $(this).attr('id')
             },
             success: function(data) {
-                console.log(data);
                 $('#totalIncome').text("$ "+data.total_income)
                 $('#totalExpense').text("$ "+data.total_expense)
                 $('#totalChange').text("$ "+data.total_change)
                 $('#totalTransfer').text("$ "+data.total_transfer)
+                $('transContrCont').html('')
+                var transaction = JSON.parse(data.transaction)
+                for (var item in transaction) {
+                    console.log(transaction[item])
+                    if (transaction[item].fields.type =='Expense') {
+                        var trans = $('<div class="transContrContSub divExpense"></div>').text(`${transaction[item].fields.type}: ${transaction[item].fields.category} (${transaction[item].fields.fromAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
+                    }
+                    if (transaction[item].fields.type =='Income') {
+                        var trans = $('<div class="transContrContSub divIncome"></div>').text(`${transaction[item].fields.type}: ${transaction[item].fields.category} (${transaction[item].fields.fromAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
+                    }
+                    if (transaction[item].fields.type =='Transfer') {
+                        var trans = $('<div class="transContrContSub divTransfer"></div>').text(`${transaction[item].fields.type}: from (${transaction[item].fields.fromAccount}) to  (${transaction[item].fields.toAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
+                    }
+                    $('.transContrCont').append(trans)
+                }
             }
         })
     })

@@ -28,6 +28,9 @@
         <button type="submit" class="btn btn-primary btn-md form-control">Filter</button>
     </form>
 </div>
+<div class="ajaxContainer text-center">
+    <button type="button" class="btn btn-primary btn-md" id="ajaxButton">Ajax</button>
+</div>
 <div class="summaryContainer">
     <div class="summaryContainerHeader text-center">
         <h4>Summary</h4>
@@ -58,15 +61,18 @@
 
 </div>
 
-<div class="summaryContainer">
-    <div class="summaryContainerHeader text-center">
+<!-- -------------------------------transaction summary -->
+<div class="transContr">
+    <div class="transContrHeadr text-center">
         <h4>Transactions</h4>
     </div>
     <hr>
-    {% for item in transaction %}
-        <div class="summaryContainerSub" id="summaryIncome">
+    <div class="transContrCont">
+        <!-- {% for item in transaction %}
+        <div class="transContrContSub" id="summaryIncome">
             <span>{{item}}</span>
         </div>
-    {% endfor %}
+        {% endfor %} -->
+    </div>
 </div>
 {% endblock %}
