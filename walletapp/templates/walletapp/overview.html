@@ -6,7 +6,7 @@
 
 <div class="overviewContainer" style="display:flex;overflow:auto;">
     {% for item in accounts %}
-    <div class="accountDiv text-center col-4" data-toggle="modal" data-target="#editAccountModal" id="{{item.accountName}}">
+    <div class="accountDiv text-center col-4" id="{{item.accountName}}" style="cursor:pointer;">
         <h4>{{item.accountName}}</h4>
         <span>Type: </span><span>{{item.accountType}}</span><br>
         <span>Balance: </span><span>{{item.accountBalance}}</span>
@@ -51,22 +51,25 @@
     </div>
 </div>
 
-<!-- -------------------------------chart canvas -->
+<!-- chart canvas -->
 <div class="container" style="display:flex;">
     <canvas class="col-6" id="expenseChart" width="300" height="300"></canvas>
     <canvas class="col-6" id="balanceChart" width="300" height="300"></canvas>
 
 </div>
 
-<div class="summaryContainer">
-    <div class="summaryContainerHeader text-center">
+<!-- transaction summary -->
+<div class="transContr">
+    <div class="transContrHeadr text-center">
         <h4>Transactions</h4>
     </div>
     <hr>
-    {% for item in transaction %}
-        <div class="summaryContainerSub" id="summaryIncome">
+    <div class="transContrCont">
+        <!-- {% for item in transaction %}
+        <div class="transContrContSub" id="summaryIncome">
             <span>{{item}}</span>
         </div>
-    {% endfor %}
+        {% endfor %} -->
+    </div>
 </div>
 {% endblock %}
