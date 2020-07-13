@@ -43,6 +43,36 @@ $(document).ready(function (){
         getTransTotal()
     })
 
+    // create initial chart
+    var color = Chart.helpers.color;
+    var ctx = document.getElementById('expenseChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                label: 'Total',
+                backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
+                borderColor: window.chartColors.red,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: 'Expense'
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
 
 
     $('.accountDiv').click(function(){
@@ -59,8 +89,10 @@ $(document).ready(function (){
                 $('#totalTransfer').text("$ "+data.total_transfer)
                 $('.transContrCont').html('')
                 var transaction = JSON.parse(data.transaction)
+                // var transaction_category = JSON.parse(data.transaction_category)
+                var transaction_category = data.transaction_category
+
                 for (var item in transaction) {
-                    console.log(transaction[item])
                     if (transaction[item].fields.type =='Expense') {
                         var trans = $('<div class="transContrContSub divExpense"></div>').text(`${transaction[item].fields.type}: ${transaction[item].fields.category} (${transaction[item].fields.fromAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
                     }
@@ -72,6 +104,17 @@ $(document).ready(function (){
                     }
                     $('.transContrCont').append(trans)
                 }
+
+                //update chart
+                console.log(transaction_category)
+                for (var item in transaction_category) {
+                    myChart.data.labels.push(transaction_category[item].category);
+                    myChart.data.datasets[0].data.push(transaction_category[item].total);
+                }
+                myChart.update();
+
+
+
             }
         })
     })

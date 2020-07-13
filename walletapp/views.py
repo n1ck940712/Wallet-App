@@ -5,6 +5,9 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from .models import dbEntry, dbCategory, dbAccount, dbAccountType
 from django.core import serializers
+from django.db.models import Sum
+import json
+
 
 # Create your views here.
 
@@ -109,7 +112,6 @@ def overview(request):
         if item.type == "Transfer":
             total_transfer += float(item.amount)
 
-    print(filtered_transaction)
     context = {
     "user": request.user,
     "accounts": dbAccount.objects.all().order_by("accountName"),
@@ -126,6 +128,9 @@ def overview(request):
 def overviewAjax(request):
     selected_account = request.GET.get('selected_account')
     filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
+    filtered_transaction_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('category').annotate(total=Sum('amount'))
+    # print(filtered_transaction)
+    # print(filtered_transaction_category)
 
     total_change = float(0) ####total change calculation
     total_income = float(0)
@@ -140,10 +145,11 @@ def overviewAjax(request):
             total_expense += float(item.amount)
         if item.type == "Transfer":
             total_transfer += float(item.amount)
-
     filtered_transaction = serializers.serialize("json", filtered_transaction)
+    filtered_transaction_category =list(filtered_transaction_category)
     context = {
     "transaction": filtered_transaction,
+    "transaction_category": filtered_transaction_category,
     "total_change": total_change,
     "total_income": total_income,
     "total_expense": total_expense,

@@ -2,7 +2,6 @@
 {% block title %}Overview{% endblock %}
 {% block body %}
 {% load static %}
-<script src="{% static 'walletapp/chart.js' %}" charset="utf-8"></script>
 
 <div class="overviewContainer" style="display:flex;overflow:auto;">
     {% for item in accounts %}
@@ -72,4 +71,6 @@
         {% endfor %} -->
     </div>
 </div>
+
+
 {% endblock %}
