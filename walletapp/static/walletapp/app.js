@@ -1,9 +1,6 @@
 $(document).ready(function (){
-    // console.log("loaded")
-    // console.log($('.dailyTotal')[0])
-    // console.log($('.dailyAdd')[0])
 
-    getTransTotal() //calculate daily total
+    getDailyChange() //calculate daily total
 
     $('#filterDate').daterangepicker({
          "opens": "left"
@@ -43,10 +40,10 @@ $(document).ready(function (){
         getTransTotal()
     })
 
-    // create initial chart
+    // create initial chart (expense)
     var color = Chart.helpers.color;
     var ctx = document.getElementById('expenseChart').getContext('2d');
-    var myChart = new Chart(ctx, {
+    var expenseChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: [],
@@ -74,6 +71,42 @@ $(document).ready(function (){
         }
     });
 
+    // create initial chart (balance history)
+    var ctx = document.getElementById("balanceChart").getContext("2d");
+    var balanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+            label: 'Change of Account Balance',
+            data: [],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+                'rgba(255,99,132,1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    type: 'time'
+                }]
+            }
+        }
+    });
 
     $('.accountDiv').click(function(){
         $.ajax({
@@ -83,15 +116,17 @@ $(document).ready(function (){
                 "selected_account": $(this).attr('id')
             },
             success: function(data) {
+                console.log(data)
+                var transaction = JSON.parse(data.transaction)
+                var transaction_category = data.transaction_category
+
                 $('#totalIncome').text("$ "+data.total_income)
                 $('#totalExpense').text("$ "+data.total_expense)
                 $('#totalChange').text("$ "+data.total_change)
                 $('#totalTransfer').text("$ "+data.total_transfer)
-                $('.transContrCont').html('')
-                var transaction = JSON.parse(data.transaction)
-                // var transaction_category = JSON.parse(data.transaction_category)
-                var transaction_category = data.transaction_category
 
+                // update transaction div
+                $('.transContrCont').html('')
                 for (var item in transaction) {
                     if (transaction[item].fields.type =='Expense') {
                         var trans = $('<div class="transContrContSub divExpense"></div>').text(`${transaction[item].fields.type}: ${transaction[item].fields.category} (${transaction[item].fields.fromAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
@@ -105,26 +140,42 @@ $(document).ready(function (){
                     $('.transContrCont').append(trans)
                 }
 
-                //update chart
-                console.log(transaction_category)
-                for (var item in transaction_category) {
-                    myChart.data.labels.push(transaction_category[item].category);
-                    myChart.data.datasets[0].data.push(transaction_category[item].total);
+                // update account balance chart
+                var latest_balance = parseInt(JSON.parse(data.selected_account_balance)[0].fields.accountBalance)
+                var balance_history = (data.balance_history).reverse()
+                var bal_history_date = []
+                var bal_history_amount = []
+                balanceChart.data.datasets[0].data.push(latest_balance)
+                for (var item in balance_history) {
+                    latest_balance -= balance_history[item].total
+                    balanceChart.data.datasets[0].data.push(latest_balance)
+                    balanceChart.data.labels.push(balance_history[item].entryDate)
                 }
-                myChart.update();
+                // for (var item in bal_history_amount) {
+                //     balanceChart.data.datasets[0].data.push(bal_history_amount[item])
+                // }
+                // for (var item in bal_history_date) {
+                //     balanceChart.data.labels.push(bal_history_date[item])
+                // }
+                balanceChart.update()
 
-
-
+                //update expense chart
+                for (var item in transaction_category) {
+                    expenseChart.data.labels.push(transaction_category[item].category);
+                    expenseChart.data.datasets[0].data.push(Math.abs(transaction_category[item].total));
+                }
+                expenseChart.update();
             }
         })
     })
 })
 
 
+//////////////////////////////////////////////////////////////////////////////////////
+// functions /////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
 
-
-
-function getTransTotal(){ //sum up total for the day
+function getDailyChange(){ //sum up total for the day
     $('.transactionDivSub').each(function(){
         var total=0;
         $(this).find(".transactionDivSubSub").each(function(){

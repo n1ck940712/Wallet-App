@@ -1,6 +1,8 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Index Page{% endblock %}
 {% block body %}
+        {% load mathfilters %}
+
 <div class="topContainer">
     <div class="filterContainer" style="display:flex">
         <form class="form-group col-10" action="{% url 'index' %}" method="post" style="display:flex;">
@@ -59,7 +61,7 @@
                             <span class="transNote">{{item.entryNote}}</span>
                         </div>
                         <div class="transRight">
-                            <span class="dailyAdd">{{item.amount}}</span>
+                            <span class="dailyAdd">{{item.amount|abs}}</span>
                         </div>
                     </div>
                     {% endif %}

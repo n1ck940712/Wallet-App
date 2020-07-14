@@ -128,9 +128,9 @@ def overview(request):
 def overviewAjax(request):
     selected_account = request.GET.get('selected_account')
     filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
-    filtered_transaction_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('category').annotate(total=Sum('amount'))
-    # print(filtered_transaction)
-    # print(filtered_transaction_category)
+    filtered_transaction_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Expense").values('category').annotate(total=Sum('amount'))
+    balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('entryDate').annotate(total=Sum('amount'))
+    selected_account_balance = dbAccount.objects.filter(accountName=selected_account)
 
     total_change = float(0) ####total change calculation
     total_income = float(0)
@@ -145,15 +145,15 @@ def overviewAjax(request):
             total_expense += float(item.amount)
         if item.type == "Transfer":
             total_transfer += float(item.amount)
-    filtered_transaction = serializers.serialize("json", filtered_transaction)
-    filtered_transaction_category =list(filtered_transaction_category)
     context = {
-    "transaction": filtered_transaction,
-    "transaction_category": filtered_transaction_category,
+    "transaction": serializers.serialize("json", filtered_transaction),
+    "transaction_category": list(filtered_transaction_category),
+    "balance_history": list(balance_history),
     "total_change": total_change,
     "total_income": total_income,
     "total_expense": total_expense,
     "total_transfer": total_transfer,
+    "selected_account_balance": serializers.serialize("json", selected_account_balance),
     }
     return JsonResponse(context, content_type="application/json", safe=False)
 
