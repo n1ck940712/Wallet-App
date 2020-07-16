@@ -43,9 +43,16 @@ body{
 }
 
 .accountDiv{
-    background-color: #7bbf71;
     border-radius: 5px;
     margin: 5px;
+}
+
+.selectedAccount{
+    background-color: #487542;
+}
+
+.notSelectedAccount{
+    background-color: #7bbf71;
 }
 
 .summaryContainer{

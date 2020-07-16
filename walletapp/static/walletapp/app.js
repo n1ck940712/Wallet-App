@@ -1,7 +1,18 @@
 $(document).ready(function (){
+    getTransaction()
 
-    getDailyChange() //calculate daily total
+    $(document).ajaxStart(function(){
+        $('#loading').show();
+    }).ajaxStop(function(){
+        $('#loading').hide();
+    });
 
+// filter button////////////////////////////////////////////////////////////////
+$('#filterButton').click(function(){
+    getTransaction()
+})
+
+// date picker ////////////////////////////////////////////////////////////////
     $('#filterDate').daterangepicker({
          "opens": "left"
     });
@@ -13,6 +24,7 @@ $(document).ready(function (){
         $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
         $('#filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
     });
+    $('#filterDate').val('All Time')
 
     $('#addEntryButton').on('click', function(){
         console.log(moment().date()+"/"+moment().month()+"/"+moment().year())
@@ -29,21 +41,21 @@ $(document).ready(function (){
         $(".new_entry_date").val(test)
     })
 
+// clear filter button////////////////////////////////////////////////////////////////////////
     $('#clearFilterButton').on('click', function(){
         $('#filterType').val('')
+        $('#filterNote').val('')
         $('#filterAccount').val('')
         $('#filterCategory').val('')
-        $('#filterNote').val('')
-        $('.transactionDivSubSub').each(function(){
-            $(this).show()
-        })
-        getTransTotal()
+        $('#filterDateStart').val('')
+        $('#filterDateEnd').val('')
+        getTransaction()
     })
 
-    // create initial chart (expense)
+////// create initial chart (expense)/////////////////////////////////////////////////////////
     var color = Chart.helpers.color;
-    var ctx = document.getElementById('expenseChart').getContext('2d');
-    var expenseChart = new Chart(ctx, {
+    var expenseChartCanvas = document.getElementById('expenseChart').getContext('2d');
+    var expenseChart = new Chart(expenseChartCanvas, {
         type: 'bar',
         data: {
             labels: [],
@@ -72,43 +84,39 @@ $(document).ready(function (){
     });
 
     // create initial chart (balance history)
-    var ctx = document.getElementById("balanceChart").getContext("2d");
-    var balanceChart = new Chart(ctx, {
+    var balanceChartCanvas = document.getElementById("balanceChart").getContext("2d");
+    var balanceChart = new Chart(balanceChartCanvas, {
         type: 'line',
         data: {
             labels: [],
             datasets: [{
-            label: 'Change of Account Balance',
+            label: 'Account Balance',
             data: [],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-                'rgba(255,99,132,1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
-            ],
             borderWidth: 1
             }]
         },
         options: {
             scales: {
                 xAxes: [{
-                    type: 'time'
+                    type: 'time',
+                    gridLines: {
+                        show: false
+                    }
+                }],
+                yAxes: [{
+                    gridLines: {
+                        show: false
+                    }
                 }]
             }
         }
     });
 
+// click event listener for accountdiv //////////////////////////////////////////////////////
     $('.accountDiv').click(function(){
+        $(this).siblings().removeClass('selectedAccount').addClass('notSelectedAccount')
+        $(this).addClass('selectedAccount').removeClass('notSelectedAccount')
+
         $.ajax({
             type: 'GET',
             url: 'overviewAjax',
@@ -116,7 +124,7 @@ $(document).ready(function (){
                 "selected_account": $(this).attr('id')
             },
             success: function(data) {
-                console.log(data)
+                // console.log(data)
                 var transaction = JSON.parse(data.transaction)
                 var transaction_category = data.transaction_category
 
@@ -140,6 +148,8 @@ $(document).ready(function (){
                     $('.transContrCont').append(trans)
                 }
 
+                removeData(balanceChart)
+                removeData(expenseChart)
                 // update account balance chart
                 var latest_balance = parseInt(JSON.parse(data.selected_account_balance)[0].fields.accountBalance)
                 var balance_history = (data.balance_history).reverse()
@@ -151,12 +161,6 @@ $(document).ready(function (){
                     balanceChart.data.datasets[0].data.push(latest_balance)
                     balanceChart.data.labels.push(balance_history[item].entryDate)
                 }
-                // for (var item in bal_history_amount) {
-                //     balanceChart.data.datasets[0].data.push(bal_history_amount[item])
-                // }
-                // for (var item in bal_history_date) {
-                //     balanceChart.data.labels.push(bal_history_date[item])
-                // }
                 balanceChart.update()
 
                 //update expense chart
@@ -174,6 +178,114 @@ $(document).ready(function (){
 //////////////////////////////////////////////////////////////////////////////////////
 // functions /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
+
+function getTransaction(){
+    filterNote = $('.filterContainer').find('input#filterNote')[0].value
+    filterCategory = $('.filterContainer').find('select#filterCategory')[0].value
+    filterAccount = $('.filterContainer').find('select#filterAccount')[0].value
+    filterType = $('.filterContainer').find('select#filterType')[0].value
+    filterDateStart = $('.filterContainer').find('input#filterDateStart')[0].value
+    filterDateEnd = $('.filterContainer').find('input#filterDateEnd')[0].value
+
+    $.ajax({
+        type: 'GET',
+        url: 'filterTransaction',
+        data: {
+            'filterNote': filterNote,
+            'filterCategory': filterCategory,
+            'filterAccount': filterAccount,
+            'filterType': filterType,
+            'filterDateStart': filterDateStart,
+            'filterDateEnd': filterDateEnd
+        },
+        success: function(data){
+            var accounts = JSON.parse(data.accounts)
+            var category = JSON.parse(data.category)
+            var transaction = JSON.parse(data.transaction)
+            var transaction_date = JSON.parse(data.transaction_date)
+            var message = data.message
+            $('.transactionDiv').html('')
+            if (transaction==null||transaction.length==0) {
+                var transactionDivSub =
+                `<div class="transactionDivSub text-center">
+                    <h2>No entry matches filter criteria.</h2>
+                </div>`;
+                $('.transactionDiv').append(transactionDivSub)
+
+            }
+            for (var x in transaction_date) {
+                var transactionDivSub = $(`<div class="transactionDivSub">
+                    <div class="transactionDivSubTitle" style="display:flex;justify-content:space-between;">
+                        <h4>${transaction_date[x].fields.entryDate}</h4>
+                        <span class="dailyTotal">$Total</span>
+                    </div>
+                </div>`)
+
+                for (var y in transaction) {
+                    if (transaction[y].fields.entryDate == transaction_date[x].fields.entryDate) {
+                        if (transaction[y].fields.type == 'Income') {
+                            var transactionDivSubSub =
+                            `<div class="transactionDivSubSub divIncome" style="display:flex; cursor:pointer;" transID="${transaction[y].fields.id}" data-toggle="modal" data-target="#indexModal" onclick="functionA(${transaction[y].fields.id})">
+                                <div class="transLeft">
+                                    <span class="transType">Income</span>:
+                                    <span class="transCategory">${transaction[y].fields.category}</span>
+                                    (<span class="transAccount">${transaction[y].fields.toAccount}</span>)
+                                    <span class="transNote">${transaction[y].fields.entryNote}</span>
+                                </div>
+                                <div class="transRight">
+                                    <span class="dailyAdd">${transaction[y].fields.amount}</span>
+                                </div>
+                            </div>`;
+                            transactionDivSub.append(transactionDivSubSub)
+                        }
+                        if (transaction[y].fields.type == 'Expense') {
+                            var transactionDivSubSub =
+                            `<div class="transactionDivSubSub divExpense" style="display:flex; cursor:pointer;" transID="${transaction[y].fields.id}" data-toggle="modal" data-target="#indexModal" onclick="functionA(${transaction[y].fields.id})">
+                                <div class="transLeft">
+                                    <span class="transType">Expense</span>:
+                                    <span class="transCategory">${transaction[y].fields.category}</span>
+                                    (<span class="transAccount">${transaction[y].fields.fromAccount}</span>)
+                                    <span class="transNote">${transaction[y].fields.entryNote}</span>
+                                    <span class="transNote">${transaction[y].fields.entryDate}</span>
+                                </div>
+                                <div class="transRight">
+                                    <span class="dailyAdd">${transaction[y].fields.amount}</span>
+                                </div>
+                            </div>`;
+                            transactionDivSub.append(transactionDivSubSub)
+                        }
+                        if (transaction[y].fields.type == 'Transfer') {
+                            var transactionDivSubSub =
+                            `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].fields.id}" data-toggle="modal" data-target="#indexModal" onclick="functionA(${transaction[y].fields.id})">
+                                <div class="transLeft">
+                                    <span class="transType">Transfer</span>:
+                                    <span class="transCategory">${transaction[y].fields.category}</span> from
+                                    (<span class="transAccount">${transaction[y].fields.fromAccount}</span>) to
+                                    (<span class="transAccount">${transaction[y].fields.toAccount}</span>)
+                                    <span class="transNote">${transaction[y].fields.entryNote}</span>
+                                </div>
+                                <div class="transRight">
+                                    <span class="dailyAdd">${transaction[y].fields.amount}</span>
+                                </div>
+                            </div>`;
+                            transactionDivSub.append(transactionDivSubSub)
+                        }
+                    }
+                }
+                $('.transactionDiv').append(transactionDivSub)
+            }
+            getDailyChange()
+        }
+    })
+}
+
+function removeData(chart){
+    chart.data.labels = []
+    chart.data.datasets.forEach((dataset) => {
+        dataset.data = []
+    });
+    chart.update();
+}
 
 function getDailyChange(){ //sum up total for the day
     $('.transactionDivSub').each(function(){

@@ -8,9 +8,6 @@ from django.core import serializers
 from django.db.models import Sum
 import json
 
-
-# Create your views here.
-
 superuser = User.objects.filter(is_superuser=True)
 if superuser.count() == 0:
     superuser=User.objects.create_user("admin","admin@admin.com","password")
@@ -21,72 +18,68 @@ if superuser.count() == 0:
 def index(request):
     if not request.user.is_authenticated:
         return render(request, "walletapp/login.html", {"message": "Login first"})
-    if request.method == "GET":
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all().order_by("category"),
-        "transaction": dbEntry.objects.order_by('-entryDate'),
-        "transaction_date": dbEntry.objects.order_by('-entryDate').distinct('entryDate'),
-        "accounts": dbAccount.objects.all(),
-        "message": None,
-        }
-    elif request.method == "POST":
-        filter_flag = False
-        filter_type = request.POST.get('filterType')
-        filter_category = request.POST.get('filterCategory')
-        filter_note = request.POST.get('filterNote')
-        filter_account = request.POST.get('filterAccount')
-        filter_date_start = request.POST.get('filterDateStart')
-        filter_date_end = request.POST.get('filterDateEnd')
-        if filter_type != "" and filter_flag == True:
-            transaction_result = transaction_result.filter(type=filter_type)
-            filter_flag = True
-        elif filter_type != "":
-            transaction_result = dbEntry.objects.filter(type=filter_type)
-            filter_flag = True
-        if filter_category != "" and filter_flag == True:
-            transaction_result = transaction_result.filter(category=filter_category)
-            filter_flag = True
-        elif filter_category !="":
-            transaction_result = dbEntry.objects.filter(category=filter_category)
-            filter_flag = True
-        if filter_note != "" and filter_flag == True:
-            transaction_result = transaction_result.filter(entryNote=filter_note)
-            filter_flag = True
-        elif filter_note != "":
-            transaction_result = dbEntry.objects.filter(entryNote=filter_note)
-            filter_flag = True
-        if filter_account != "" and filter_flag == True:
-            transaction_result = transaction_result.filter(fromAccount=filter_account)|transaction_result.filter(toAccount=filter_account)
-            filter_flag = True
-        elif filter_account != "":
-            transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
-            filter_flag = True
-        # Date filtering
-        if filter_date_end == filter_date_start and filter_date_start != "":
-            if filter_flag == True:
-                transaction_result = transaction_result.filter(entryDate=filter_date_start)
-                filter_flag = True
-            else:
-                transaction_result = dbEntry.objects.filter(entryDate=filter_date_start)
-                filter_flag = True
-        elif filter_date_end != filter_date_start:
-            if filter_flag == True:
-                transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
-            else:
-                transaction_result = dbEntry.objects.filter(entryDate__range=[filter_date_start, filter_date_end])
-                filter_flag = True
-        if filter_flag == False:
-            transaction_result = dbEntry.objects.all()
-        context = {
-        "user": request.user,
-        "category": dbCategory.objects.all().order_by("category"),
-        "transaction": transaction_result.order_by('-entryDate'),
-        "transaction_date": transaction_result.order_by('-entryDate').distinct('entryDate'),
-        "accounts": dbAccount.objects.all().order_by("accountName"),
-        "message": None,
-        }
+    context = {
+    'user': request.user,
+    }
     return render(request, "walletapp/index.html", context)
+
+def filterTransaction(request):
+    filter_flag = False
+    filter_type = request.GET.get('filterType')
+    filter_category = request.GET.get('filterCategory')
+    filter_note = request.GET.get('filterNote')
+    filter_account = request.GET.get('filterAccount')
+    filter_date_start = request.GET.get('filterDateStart')
+    filter_date_end = request.GET.get('filterDateEnd')
+    if filter_type != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(type=filter_type)
+        filter_flag = True
+    elif filter_type != "":
+        transaction_result = dbEntry.objects.filter(type=filter_type)
+        filter_flag = True
+    if filter_category != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(category=filter_category)
+        filter_flag = True
+    elif filter_category !="":
+        transaction_result = dbEntry.objects.filter(category=filter_category)
+        filter_flag = True
+    if filter_note != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(entryNote=filter_note)
+        filter_flag = True
+    elif filter_note != "":
+        transaction_result = dbEntry.objects.filter(entryNote=filter_note)
+        filter_flag = True
+    if filter_account != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(fromAccount=filter_account)|transaction_result.filter(toAccount=filter_account)
+        filter_flag = True
+    elif filter_account != "":
+        transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
+        filter_flag = True
+    # Date filtering
+    if filter_date_end == filter_date_start and filter_date_start != "":
+        if filter_flag == True:
+            transaction_result = transaction_result.filter(entryDate=filter_date_start)
+            filter_flag = True
+        else:
+            transaction_result = dbEntry.objects.filter(entryDate=filter_date_start)
+            filter_flag = True
+    elif filter_date_end != filter_date_start:
+        if filter_flag == True:
+            transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
+        else:
+            transaction_result = dbEntry.objects.filter(entryDate__range=[filter_date_start, filter_date_end])
+            filter_flag = True
+    if filter_flag == False:
+        transaction_result = dbEntry.objects.all()
+    data = {
+    # "user": list(request.user),
+    "category": serializers.serialize('json', dbCategory.objects.all().order_by("category")),
+    "transaction": serializers.serialize('json', transaction_result.order_by('-entryDate')),
+    "transaction_date": serializers.serialize('json', transaction_result.order_by('-entryDate').distinct('entryDate')),
+    "accounts": serializers.serialize('json', dbAccount.objects.all().order_by("accountName")),
+    "message": None,
+    }
+    return JsonResponse(data)
 
 def overview(request):
     if request.method=="GET":
