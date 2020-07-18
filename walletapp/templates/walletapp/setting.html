@@ -1,8 +1,8 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Settings{% endblock %}
 {% block body %}
-<div class="categoryContainer">
-    <hr>
+<hr>
+<div class="categoryContainer col-md-5">
     <div class="accountContainerHeader" style="display:flex;">
         <h5>Category</h5>
         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addCategoryModal" name="button">Add</button>
@@ -10,12 +10,12 @@
     {% for item in category %}
     <div class="categorySub">
         <span>{{item.category}}</span>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
+        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
     </div>
     {% endfor %}
 </div>
-<div class="accountContainer">
-    <hr>
+<hr>
+<div class="accountContainer col-md-5">
     <div class="accountContainerHeader" style="display:flex;">
         <h5>Accounts</h5>
         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addAccountModal" name="button">Add</button>
@@ -23,11 +23,13 @@
     {% for item in accounts %}
     <div class="accountSub">
         <span>{{item}}</span>
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
+        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
     </div>
     {% endfor %}
 </div>
 <hr>
+
+<!-- add category//////////////////////////////////////////////////////// -->
 <div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -42,13 +44,15 @@
                     {% csrf_token %}
                     <div class="inviForm"></div>
                     <label for="add_category_input">New category</label>
-                    <input type="text" class="form-control" name="add_category_input" id="add_category_input">
-                    <button type="submit" class="btn btn-primary">Add</button>
+                    <input type="text" class="form-control add_category_input" name="add_category_input" id="add_category_input">
+                    <button type="button" class="btn btn-primary addNewCategory">Test</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- edit or delete category/////////////////////////////////////////////////// -->
 <div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -74,6 +78,8 @@
         </div>
     </div>
 </div>
+
+<!-- edit or delete account//////////////////////////////////////////////// -->
 <div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -109,6 +115,8 @@
         </div>
     </div>
 </div>
+
+<!-- add account modal//////////////////////////////////////////////////// -->
 <div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">

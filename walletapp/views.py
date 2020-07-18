@@ -20,6 +20,9 @@ def index(request):
         return render(request, "walletapp/login.html", {"message": "Login first"})
     context = {
     'user': request.user,
+    'accounts': dbAccount.objects.all().order_by('accountName'),
+    'category': dbCategory.objects.all().order_by('category'),
+    'transactions': dbEntry.objects.all()
     }
     return render(request, "walletapp/index.html", context)
 
@@ -117,7 +120,6 @@ def overview(request):
     }
     return render(request, "walletapp/overview.html", context)
 
-# testing ajax requests
 def overviewAjax(request):
     selected_account = request.GET.get('selected_account')
     filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
@@ -175,29 +177,35 @@ def addEntry(request):
             get_account_to.save()
             get_account_from.save()
         new_entry = dbEntry(amount=new_entry_amount, category=new_entry_category, fromAccount=new_entry_from, toAccount=new_entry_to, entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
-        new_entry.save()
-    return HttpResponseRedirect(reverse("index"))
+        # new_entry.save()
+
+        data = {
+        'message': 'New transaction added.'
+        }
+    return JsonResponse(data)
 
 def deleteEntry(request):
-    if request.method == "POST":
-        del_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
-        if del_entry.type=="Expense":
-            get_account = dbAccount.objects.get(accountName=del_entry.fromAccount)
-            get_account.accountBalance=str(float(get_account.accountBalance)+float(del_entry.amount))
-            get_account.save()
-        if del_entry.type=="Income":
-            get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
-            get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
-            get_account.save()
-        if del_entry.type=="Transfer":
-            get_account_from = dbAccount.objects.get(accountName=del_entry.fromAccount)
-            get_account_to = dbAccount.objects.get(accountName=del_entry.toAccount)
-            get_account_from.accountBalance=str(float(get_account_from.accountBalance)+float(del_entry.amount))
-            get_account_to.accountBalance=str(float(get_account_to.accountBalance)-float(del_entry.amount))
-            get_account_to.save()
-            get_account_from.save()
-        del_entry.delete()
-    return HttpResponseRedirect(reverse("index"))
+    del_entry = dbEntry.objects.get(pk=request.GET.get('entry_id'))
+    if del_entry.type=="Expense":
+        get_account = dbAccount.objects.get(accountName=del_entry.fromAccount)
+        get_account.accountBalance=str(float(get_account.accountBalance)+float(del_entry.amount))
+        get_account.save()
+    if del_entry.type=="Income":
+        get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
+        get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
+        get_account.save()
+    if del_entry.type=="Transfer":
+        get_account_from = dbAccount.objects.get(accountName=del_entry.fromAccount)
+        get_account_to = dbAccount.objects.get(accountName=del_entry.toAccount)
+        get_account_from.accountBalance=str(float(get_account_from.accountBalance)+float(del_entry.amount))
+        get_account_to.accountBalance=str(float(get_account_to.accountBalance)-float(del_entry.amount))
+        get_account_to.save()
+        get_account_from.save()
+    del_entry.delete()
+    data = {
+        'message': 'Transaction deleted'
+    }
+    return JsonResponse(data)
 
 def editEntry(request):
     if request.method == "POST":
@@ -327,7 +335,7 @@ def editCategory(request):
 
 def addCategory(request):
     if request.method == "POST":
-        edit_category = dbCategory(category=request.POST['add_category_input'])
+        edit_category = dbCategory(category=request.POST['new_category_name'])
         edit_category.save()
     return HttpResponseRedirect(reverse("settingPage"))
 

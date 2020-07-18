@@ -80,3 +80,31 @@ body{
     border-radius: 5px;
     margin: 5px;
 }
+
+.categoryContainer, .accountContainer{
+    margin: auto;
+    border-radius: 5px;
+    padding: 5px;
+    background-color: #9e9e9e;
+}
+
+.loadingTransaction{
+    position: fixed;
+    top: 56px;
+    left: 0;
+    z-index: 1040;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    opacity: 0.5;
+}
+
+.loadingTransactionSub{
+    opacity: 1;
+    margin: auto;
+    width: 200px;
+    top: 100px;
+    background-color: white;
+    border-radius: 5px;
+    padding: 30px 5px 30px 5px;
+}
