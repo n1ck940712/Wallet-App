@@ -208,24 +208,25 @@ def deleteEntry(request):
     return JsonResponse(data)
 
 def editEntry(request):
-    if request.method == "POST":
-        context = {
-        "user": request.user,
-        "chosen_entry": dbEntry.objects.get(pk=request.POST['entry_id']),
-        "category": dbCategory.objects.all().order_by("category"),
-        "accounts": dbAccount.objects.all().order_by("accountName"),
-        }
-    return render(request, "walletapp/edit.html", context)
+    context = {
+    # "user": request.user,
+    "chosen_entry": serializers.serialize('json', dbEntry.objects.filter(pk=request.GET.get('entry_id'))),
+    "category": serializers.serialize('json', dbCategory.objects.all().order_by("category")),
+    "accounts": serializers.serialize('json', dbAccount.objects.all().order_by("accountName")),
+    }
+    return JsonResponse(context)
 
 def editEntryConfirm(request):
     if request.method == "POST":
+        old_entry = dbEntry.objects.get(pk=request.POST['edit_entry_pk'])
+        edit_entry_to = request.POST.get('edit_entry_to')
+        edit_entry_from = request.POST.get('edit_entry_from')
+        edit_entry_note= request.POST.get('edit_entry_note')
         edit_entry_amount = request.POST.get('edit_entry_amount')
         edit_entry_category = request.POST.get('edit_entry_category')
-        edit_entry_from = request.POST.get('edit_entry_from')
-        edit_entry_to = request.POST.get('edit_entry_to')
-        edit_entry_note= request.POST.get('edit_entry_note')
-        old_entry = dbEntry.objects.get(pk=request.POST['entry_id'])
+        entry_change_flag = False
         if old_entry.amount != float(edit_entry_amount):
+            entry_change_flag = True
             print("amount change")
             if old_entry.type == "Expense":
                 get_account = dbAccount.objects.get(accountName=old_entry.fromAccount)
@@ -247,9 +248,11 @@ def editEntryConfirm(request):
                 get_account_to.save()
             old_entry.amount = edit_entry_amount
         if old_entry.category != edit_entry_category:
+            entry_change_flag = True
             print("category change")
             old_entry.category = edit_entry_category
         if old_entry.fromAccount != edit_entry_from:
+            entry_change_flag = True
             print("from account change")
             if old_entry.type == "Expense":
                 get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
@@ -268,6 +271,7 @@ def editEntryConfirm(request):
                 get_account_new.save()
             old_entry.fromAccount = edit_entry_from
         if old_entry.toAccount != edit_entry_to:
+            entry_change_flag = True
             print(old_entry.toAccount)
             print(edit_entry_to)
             print("to account change")
@@ -287,10 +291,14 @@ def editEntryConfirm(request):
                 get_account_new.save()
             old_entry.toAccount = edit_entry_to
         if old_entry.entryNote != edit_entry_note:
+            entry_change_flag = True
             print("note change")
             old_entry.entryNote = edit_entry_note
         old_entry.save()
-    return HttpResponseRedirect(reverse("index"))
+    data = {
+    'entry_change_flag': entry_change_flag,
+    }
+    return JsonResponse(data)
 
 def signin(request):
     if request.method=="POST":
@@ -337,7 +345,10 @@ def addCategory(request):
     if request.method == "POST":
         edit_category = dbCategory(category=request.POST['new_category_name'])
         edit_category.save()
-    return HttpResponseRedirect(reverse("settingPage"))
+    data = {
+        'message': 'success'
+    }
+    return JsonResponse(data)
 
 def deleteAccount(request):
     if request.method == "POST":

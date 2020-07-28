@@ -23,13 +23,11 @@ $(document).ready(function (){
                     display: true,
                     text: 'Expense'
                 },
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                }
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
             }
         });
         var balanceChartCanvas = document.getElementById("balanceChart").getContext("2d"); //init balance chart
@@ -54,6 +52,9 @@ $(document).ready(function (){
                     yAxes: [{
                         gridLines: {
                             show: false
+                        },
+                        ticks: {
+                            beginAtZero: true
                         }
                     }]
                 }
@@ -79,20 +80,6 @@ $(document).ready(function (){
                     $('#totalChange').text("$ "+data.total_change)
                     $('#totalTransfer').text("$ "+data.total_transfer)
 
-                    // update transaction div
-                    $('.transContrCont').html('')
-                    for (var item in transaction) {
-                        if (transaction[item].fields.type =='Expense') {
-                            var trans = $('<div class="transContrContSub divExpense"></div>').text(`${transaction[item].fields.type}: ${transaction[item].fields.category} (${transaction[item].fields.fromAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
-                        }
-                        if (transaction[item].fields.type =='Income') {
-                            var trans = $('<div class="transContrContSub divIncome"></div>').text(`${transaction[item].fields.type}: ${transaction[item].fields.category} (${transaction[item].fields.toAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
-                        }
-                        if (transaction[item].fields.type =='Transfer') {
-                            var trans = $('<div class="transContrContSub divTransfer"></div>').text(`${transaction[item].fields.type}: from (${transaction[item].fields.fromAccount}) to  (${transaction[item].fields.toAccount}) ${transaction[item].fields.entryNote}   $${transaction[item].fields.amount}`)
-                        }
-                        $('.transContrCont').append(trans)
-                    }
                     removeData(balanceChart)
                     removeData(expenseChart)
 
@@ -172,7 +159,75 @@ $(document).ready(function (){
     $('.entryEditButton').click(function(){ //edit entry
         var entry_id = $('#entry_id').val()
         console.log(entry_id)
+        $('.editEntryForm').show()
+        $.ajax({
+            type: 'GET',
+            url: 'editEntry',
+            data: {
+                'entry_id': entry_id,
+            },
+            beforeSend: function () {
+                $('#loadingTransaction').show();
+            },
+            complete: function () {
+                $('#loadingTransaction').hide();
+            },
+            success: function(data){
+                var accounts = JSON.parse(data.accounts)
+                var category = JSON.parse(data.category)
+                var chosen_entry = JSON.parse(data.chosen_entry)
+                var pk = chosen_entry[0].pk
+                var amount = chosen_entry[0].fields.amount
+                var entry_date = chosen_entry[0].fields.entryDate
+                var entry_note = chosen_entry[0].fields.entryNote
+                var from_account = chosen_entry[0].fields.fromAccount
+                var to_account = chosen_entry[0].fields.toAccount
+                var type = chosen_entry[0].fields.type
+                if (type == "Expense") {
+                    $('.editEntryForm').html(`
+                        <input type="hidden" class="edit_entry_pk" value="${pk}">
+                        <input type="hidden" class="edit_entry_to" value="${to_account}">
+                        <label for="edit_entry_amount">Amount</label>
+                        <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                        <label for="edit_entry_from">Account</label>
+                        <select class="form-control edit_entry_from">
+                        </select>
+                        <label for="edit_entry_category">Category</label>
+                        <select class="form-control edit_entry_category">
+                        </select>
+                        <label for="edit_entry_note">Note</label>
+                        <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                        <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                    `)
+                    for (var i in accounts) {
+                        var x = accounts[i].fields.accountName
+                        if (x == from_account) {
+                            console.log('equal entry account')
+                            var option = $(`<option value="${x}" selected>${x}</option>`)
+                            $('.edit_entry_from').append(option)
+                        }
+                        else {
+                            var option = $(`<option value="${x}">${x}</option>`)
+                            $('.edit_entry_from').append(option)
+                        }
+                    }
+                    for (var i in category) {
+                        var x = category[i].fields.category
+                        if (x == category) {
+                            var option = $(`<option value="${x}" selected>${x}</option>`)
+                            $('.edit_entry_category').append(option)
+                        }
+                        else {
+                            var option = $(`<option value="${x}">${x}</option>`)
+                            $('.edit_entry_category').append(option)
+                        }
+                    }
+                }
+            }
+        })
     })
+
+
 })
 // end of window.load
 
@@ -182,9 +237,36 @@ $(document).ready(function (){
 // functions /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
+function editEntryConfirm(){
+    $.ajax({
+        type: 'POST',
+        url: 'editEntryConfirm',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        data: {
+            'edit_entry_pk': $('.edit_entry_pk').val(),
+            'edit_entry_to': $('.edit_entry_to').val(),
+            'edit_entry_from': $('.edit_entry_from').val(),
+            'edit_entry_note': $('.edit_entry_note').val(),
+            'edit_entry_amount': $('.edit_entry_amount').val(),
+            'edit_entry_category': $('.edit_entry_category').val(),
+        },
+        success: function(data){
+            hideModal()
+            var entry_change_flag = JSON.parse(data.entry_change_flag)
+            if (entry_change_flag == true) {
+                loadTransaction()
+                console.log('changes')
+            }
+        }
+    })
+}
+
 function hideModal(){
     $('.modal').hide()
     $('.modal-backdrop').hide()
+    $('.editEntryForm').hide()
 }
 
 function deleteEntry(entry_id){

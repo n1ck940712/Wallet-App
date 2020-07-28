@@ -1,6 +1,8 @@
 
-body{
+html,body{
     max-height: 100vh;
+    height: 100%;
+    overflow: hidden;
 }
 
 .form-signin{
@@ -10,7 +12,7 @@ body{
     margin: 0 auto;
 }
 .transactionDiv{
-    max-height: 80vh;
+    height: 425px;
     overflow: auto;
 }
 .transactionDivSub{
@@ -107,4 +109,8 @@ body{
     background-color: white;
     border-radius: 5px;
     padding: 30px 5px 30px 5px;
+}
+
+.editEntryForm{
+    display: none;
 }

@@ -28,46 +28,49 @@
     </form>
 </div> -->
 
+<div class="container-fluid" style="overflow:auto;height:400px">
+    <div class="summaryContainer">
+        <div class="summaryContainerHeader text-center">
+            <h4>Summary</h4>
+        </div>
+        <hr>
+        <div class="summaryContainerSub">
+            <span>Total Income</span>
+            <span id="totalIncome">{{total_income}}</span>
+        </div>
+        <div class="summaryContainerSub">
+            <span>Total Expense</span>
+            <span id="totalExpense">{{total_expense}}</span>
+        </div>
+        <div class="summaryContainerSub">
+            <span>Total Transfer</span>
+            <span id="totalTransfer">{{total_transfer}}</span>
+        </div>
+        <div class="summaryContainerSub">
+            <span>Balance Change</span>
+            <span id="totalChange">{{total_change}}</span>
+        </div>
+    </div>
+
+    <!-- chart canvas -->
+    <div class="container" style="display:flex;">
+        <canvas class="col-6" id="expenseChart" width="300" height="300"></canvas>
+        <canvas class="col-6" id="balanceChart" width="300" height="300"></canvas>
+    </div>
+    
+</div>
+{% endblock %}
+
+
+
+
 <!-- Account Summary -->
-<div class="summaryContainer">
-    <div class="summaryContainerHeader text-center">
-        <h4>Summary</h4>
-    </div>
-    <hr>
-    <div class="summaryContainerSub">
-        <span>Total Income</span>
-        <span id="totalIncome">{{total_income}}</span>
-    </div>
-    <div class="summaryContainerSub">
-        <span>Total Expense</span>
-        <span id="totalExpense">{{total_expense}}</span>
-    </div>
-    <div class="summaryContainerSub">
-        <span>Total Transfer</span>
-        <span id="totalTransfer">{{total_transfer}}</span>
-    </div>
-    <div class="summaryContainerSub">
-        <span>Balance Change</span>
-        <span id="totalChange">{{total_change}}</span>
-    </div>
-</div>
-
-<!-- chart canvas -->
-<div class="container" style="display:flex;">
-    <canvas class="col-6" id="expenseChart" width="300" height="300"></canvas>
-    <canvas class="col-6" id="balanceChart" width="300" height="300"></canvas>
-
-</div>
-
 <!-- transaction summary -->
-<div class="transContr">
+<!-- <div class="transContr">
     <div class="transContrHeadr text-center">
         <h4>Transactions</h4>
     </div>
     <hr>
     <div class="transContrCont">
     </div>
-</div>
-
-
-{% endblock %}
+</div> -->
