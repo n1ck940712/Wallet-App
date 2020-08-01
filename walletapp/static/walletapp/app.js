@@ -1,7 +1,7 @@
 $(document).ready(function (){
 
 
-    if (window.location.pathname=='/') {loadTransaction()} // transaction page specific scripts
+    if (window.location.pathname=='/') {loadEntry()} // transaction page specific scripts
     if (window.location.pathname=='/overview') { //overview page scripts
         var color = Chart.helpers.color;
         var expenseChartCanvas = document.getElementById('expenseChart').getContext('2d'); // init expense chart
@@ -109,7 +109,7 @@ $(document).ready(function (){
 
     // filter button
     $('#filterButton').click(function(){
-        loadTransaction()
+        loadEntry()
     })
     // date picker
     $('#filterDate').daterangepicker({
@@ -136,97 +136,52 @@ $(document).ready(function (){
     })
 
     $('.submitNewEntry').click(function(){ // confirm new entry
-        newTransaction()
+        addEntry()
     })
 
-    $('#clearFilterButton').on('click', function(){ // clear filter
+    $('#clearFilterButton').click(function(){ // clear filter
         $('#filterType').val('')
         $('#filterNote').val('')
         $('#filterAccount').val('')
         $('#filterCategory').val('')
         $('#filterDateStart').val('')
         $('#filterDateEnd').val('')
-        loadTransaction()
-    })
-
-    $('.addNewCategory').click(function(){ //add new category
-        addNewCategory()
+        loadEntry()
     })
 
     $('.entryDeleteButton').click(function(){ //delete entry
         deleteEntry($('#entry_id').val())
     })
+
     $('.entryEditButton').click(function(){ //edit entry
-        var entry_id = $('#entry_id').val()
-        console.log(entry_id)
+        editEntry($('#entry_id').val())
         $('.editEntryForm').show()
-        $.ajax({
-            type: 'GET',
-            url: 'editEntry',
-            data: {
-                'entry_id': entry_id,
-            },
-            beforeSend: function () {
-                $('#loadingTransaction').show();
-            },
-            complete: function () {
-                $('#loadingTransaction').hide();
-            },
-            success: function(data){
-                var accounts = JSON.parse(data.accounts)
-                var category = JSON.parse(data.category)
-                var chosen_entry = JSON.parse(data.chosen_entry)
-                var pk = chosen_entry[0].pk
-                var amount = chosen_entry[0].fields.amount
-                var entry_date = chosen_entry[0].fields.entryDate
-                var entry_note = chosen_entry[0].fields.entryNote
-                var from_account = chosen_entry[0].fields.fromAccount
-                var to_account = chosen_entry[0].fields.toAccount
-                var type = chosen_entry[0].fields.type
-                if (type == "Expense") {
-                    $('.editEntryForm').html(`
-                        <input type="hidden" class="edit_entry_pk" value="${pk}">
-                        <input type="hidden" class="edit_entry_to" value="${to_account}">
-                        <label for="edit_entry_amount">Amount</label>
-                        <input class="form-control edit_entry_amount" type="text" value="${amount}">
-                        <label for="edit_entry_from">Account</label>
-                        <select class="form-control edit_entry_from">
-                        </select>
-                        <label for="edit_entry_category">Category</label>
-                        <select class="form-control edit_entry_category">
-                        </select>
-                        <label for="edit_entry_note">Note</label>
-                        <input class="form-control edit_entry_note" type="text" value="${entry_note}">
-                        <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
-                    `)
-                    for (var i in accounts) {
-                        var x = accounts[i].fields.accountName
-                        if (x == from_account) {
-                            console.log('equal entry account')
-                            var option = $(`<option value="${x}" selected>${x}</option>`)
-                            $('.edit_entry_from').append(option)
-                        }
-                        else {
-                            var option = $(`<option value="${x}">${x}</option>`)
-                            $('.edit_entry_from').append(option)
-                        }
-                    }
-                    for (var i in category) {
-                        var x = category[i].fields.category
-                        if (x == category) {
-                            var option = $(`<option value="${x}" selected>${x}</option>`)
-                            $('.edit_entry_category').append(option)
-                        }
-                        else {
-                            var option = $(`<option value="${x}">${x}</option>`)
-                            $('.edit_entry_category').append(option)
-                        }
-                    }
-                }
-            }
-        })
     })
 
+// setting page
+    $('.addNewCategory').click(function(){ //add new category
+        addCategory()
+    })
+
+    $('.editCategoryConfirm').click(function(){
+        editCategoryConfirm()
+    })
+
+    $('.deleteCategoryConfirm').click(function(){
+        deleteCategory()
+    })
+
+    $('.addAccountConfirm').click(function(){
+        addAccount()
+    })
+
+    $('.editAccountConfirm').click(function(){
+        editAccount()
+    })
+
+    $('.deleteAccountConfirm').click(function(){
+        deleteAccount()
+    })
 
 })
 // end of window.load
@@ -237,54 +192,209 @@ $(document).ready(function (){
 // functions /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-function editEntryConfirm(){
+// account
+function addAccount(){
     $.ajax({
         type: 'POST',
-        url: 'editEntryConfirm',
+        url: 'addAccount',
         headers: {
             'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
         },
         data: {
-            'edit_entry_pk': $('.edit_entry_pk').val(),
-            'edit_entry_to': $('.edit_entry_to').val(),
-            'edit_entry_from': $('.edit_entry_from').val(),
-            'edit_entry_note': $('.edit_entry_note').val(),
-            'edit_entry_amount': $('.edit_entry_amount').val(),
-            'edit_entry_category': $('.edit_entry_category').val(),
+            'add_account_name': $('.add_account_name').val(),
+            'add_account_type': $('.add_account_type').val(),
+            'add_account_balance': $('.add_account_balance').val(),
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
         },
         success: function(data){
             hideModal()
-            var entry_change_flag = JSON.parse(data.entry_change_flag)
-            if (entry_change_flag == true) {
-                loadTransaction()
-                console.log('changes')
+            loadAccount()
+            console.log(data)
+        }
+    })
+}
+
+function editAccount(){
+    $.ajax({
+        type: 'POST',
+        url: 'editAccount',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        data: {
+            'account_id': $('.account_id').val(),
+            'edit_account_name': $('.edit_account_name').val(),
+            'edit_account_balance': $('.edit_account_balance').val(),
+            'edit_account_type': $('.edit_account_type').val(),
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        success: function(data){
+            hideModal()
+            loadAccount()
+            console.log(data)
+        }
+    })
+}
+
+function deleteAccount(){
+    $.ajax({
+        type: 'POST',
+        url: 'deleteAccount',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        data: {
+            'account_id': $('.account_id').val()
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        success: function(data){
+            hideModal()
+            loadAccount()
+            console.log(data)
+        }
+    })
+}
+
+function accountDetail(account_id, account_name, account_balance, account_type){
+    $('.edit_account_name').val(account_name)
+    $('.edit_account_balance').val(account_balance)
+    $('.edit_account_type').val(account_type)
+    $('.inviForm').html(`
+        <input type="hidden" class="account_id" value="${account_id}">
+    `)
+}
+
+function loadAccount(){
+    $.ajax({
+        type: 'GET',
+        url: 'loadAccount',
+        data: 'data',
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        complete: function(){
+            $('.loadingAnim').hide()
+        },
+        success: function(data){
+            var account = JSON.parse(data.account)
+            $('.accountContainerBody').html('')
+            for (var i in account) {
+                var accountSub = $(`
+                    <div class="accountSub">
+                        <span>${account[i].fields.accountName} (${account[i].fields.accountType}) - Balance: ${account[i].fields.accountBalance}</span>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('${account[i].pk}', '${account[i].fields.accountName}', '${account[i].fields.accountBalance}', '${account[i].fields.accountType}')">Edit</button>
+                    </div>
+                `)
+                $('.accountContainerBody').append(accountSub)
             }
         }
     })
 }
 
-function hideModal(){
-    $('.modal').hide()
-    $('.modal-backdrop').hide()
-    $('.editEntryForm').hide()
-}
-
-function deleteEntry(entry_id){
+// category
+function addCategory(){
     $.ajax({
-        type: 'GET',
-        url: 'deleteEntry',
+        type: 'POST',
+        url: 'addCategory',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
         data: {
-            'entry_id': entry_id,
+            'new_category_name': $('.add_category_input').val()
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
         },
         success: function(data){
             hideModal()
-            loadTransaction()
+            loadCategory()
             console.log(data)
         },
+
     })
 }
 
-function newTransaction(){
+function editCategoryConfirm(){
+    $.ajax({
+        type: 'POST',
+        url: 'editCategory',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        data: {
+            'category_id': $('.category_id').val(),
+            'edit_category_input':$('.edit_category_input').val(),
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        success: function(data){
+            hideModal()
+            loadCategory()
+            console.log(data)
+        }
+    })
+}
+
+function deleteCategory(){
+    $.ajax({
+        type: 'GET',
+        url: 'deleteCategory',
+        data: {
+            'category_id': $('.category_id').val(),
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        success: function(data){
+            hideModal()
+            loadCategory()
+            console.log(data)
+        }
+    })
+}
+
+function categoryDetail(category_id, category_name){
+    $('.edit_category_input').val(category_name)
+    $('.inviForm').html(`
+        <input type="hidden" class="category_id" value="${category_id}">
+    `)
+}
+
+function loadCategory(){
+    $.ajax({
+        type: 'GET',
+        url: 'loadCategory',
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        complete: function(){
+            $('.loadingAnim').hide()
+        },
+        success: function(data){
+            var category = JSON.parse(data.category)
+            $('.categoryContainerBody').html('')
+            for (var i in category) {
+                var categorySub = $(`
+                    <div class="categorySub">
+                        <span>${category[i].fields.category}</span>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('${category[i].pk}', '${category[i].fields.category}')">Edit</button>
+                    </div>
+                `)
+                $('.categoryContainerBody').append(categorySub)
+            }
+        }
+    })
+}
+
+// entry
+function addEntry(){
     var new_entry_from = $('.selectedTab').find('.new_entry_from').val()
     var new_entry_to = $('.selectedTab').find('.new_entry_to').val()
     var new_entry_amount = $('.selectedTab').find('.new_entry_amount').val()
@@ -309,57 +419,131 @@ function newTransaction(){
             'new_entry_date': new_entry_date,
         },
         beforeSend: function () {
-            $('#addingTransaction').show();
-        },
-        complete: function () {
-            $('#addingTransaction').hide();
+            $('.loadingAnim').show();
         },
         success: function(data) {
             hideModal()
             console.log(data)
-            loadTransaction()
+            loadEntry()
         }
     })
 }
 
-function getTodayDate(){
-    var dd = moment().date();
-    var mm = moment().month()+1;
-    var yy = moment().year();
-    if (mm<10) {
-        mm = '0'+mm;
-    }
-    if (dd<10) {
-        dd = '0'+dd;
-    }
-    var todayDate = (yy + '-' + mm + '-' + dd)
-    return todayDate
+function editEntry(entry_id){
+    $.ajax({
+        type: 'GET',
+        url: 'editEntry',
+        data: {
+            'entry_id': entry_id,
+        },
+        beforeSend: function () {
+            $('#loadingAnim').show();
+        },
+        complete: function () {
+            $('#loadingAnim').hide();
+        },
+        success: function(data){
+            var accounts = JSON.parse(data.accounts)
+            var category = JSON.parse(data.category)
+            var chosen_entry = JSON.parse(data.chosen_entry)
+            var pk = chosen_entry[0].pk
+            var amount = chosen_entry[0].fields.amount
+            var entry_date = chosen_entry[0].fields.entryDate
+            var entry_note = chosen_entry[0].fields.entryNote
+            var from_account = chosen_entry[0].fields.fromAccount
+            var to_account = chosen_entry[0].fields.toAccount
+            var type = chosen_entry[0].fields.type
+            if (type == "Expense") {
+                $('.editEntryForm').html(`
+                    <input type="hidden" class="edit_entry_pk" value="${pk}">
+                    <input type="hidden" class="edit_entry_to" value="${to_account}">
+                    <label for="edit_entry_amount">Amount</label>
+                    <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                    <label for="edit_entry_from">Account</label>
+                    <select class="form-control edit_entry_from">
+                    </select>
+                    <label for="edit_entry_category">Category</label>
+                    <select class="form-control edit_entry_category">
+                    </select>
+                    <label for="edit_entry_note">Note</label>
+                    <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                `)
+                for (var i in accounts) {
+                    var x = accounts[i].fields.accountName
+                    if (x == from_account) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_from').append(option)
+                    }
+                    else {
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_from').append(option)
+                    }
+                }
+                for (var i in category) {
+                    var x = category[i].fields.category
+                    if (x == category) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_category').append(option)
+                    }
+                    else {
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_category').append(option)
+                    }
+                }
+            }
+        }
+    })
 }
 
-function addNewCategory(){
+function editEntryConfirm(){
     $.ajax({
         type: 'POST',
-        url: 'addCategory',
+        url: 'editEntryConfirm',
         headers: {
             'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
         },
         data: {
-            'new_category_name': $('.add_category_input').val()
+            'edit_entry_pk': $('.edit_entry_pk').val(),
+            'edit_entry_to': $('.edit_entry_to').val(),
+            'edit_entry_from': $('.edit_entry_from').val(),
+            'edit_entry_note': $('.edit_entry_note').val(),
+            'edit_entry_amount': $('.edit_entry_amount').val(),
+            'edit_entry_category': $('.edit_entry_category').val(),
         },
         success: function(data){
-            console.log(data)
-        },
-        beforeSend: function () {
-            $('#loadingAddNewCategory').show();
-        },
-        complete: function () {
-            $('#loadingAddNewCategory').hide();
-        },
-
+            hideModal()
+            var entry_change_flag = JSON.parse(data.entry_change_flag)
+            if (entry_change_flag == true) {
+                loadEntry()
+                console.log('changes')
+            }
+        }
     })
 }
 
-function loadTransaction(){
+function deleteEntry(entry_id){
+    $.ajax({
+        type: 'GET',
+        url: 'deleteEntry',
+        data: {
+            'entry_id': entry_id,
+        },
+        success: function(data){
+            hideModal()
+            loadEntry()
+            console.log(data)
+        },
+    })
+}
+
+function selectEntry(trans_id){
+    $('.editEntryHiddendiv').html(`
+        <input type="hidden" id="entry_id" value="${trans_id}">
+    `)
+}
+
+function loadEntry(){
     filterNote = $('.filterContainer').find('input#filterNote')[0].value
     filterCategory = $('.filterContainer').find('select#filterCategory')[0].value
     filterAccount = $('.filterContainer').find('select#filterAccount')[0].value
@@ -369,7 +553,7 @@ function loadTransaction(){
 
     $.ajax({
         type: 'GET',
-        url: 'filterTransaction',
+        url: 'loadEntry',
         data: {
             'filterNote': filterNote,
             'filterCategory': filterCategory,
@@ -379,10 +563,10 @@ function loadTransaction(){
             'filterDateEnd': filterDateEnd
         },
         beforeSend: function () {
-            $('.loadingTransaction').show();
+            $('.loadingAnim').show();
         },
         complete: function () {
-            $('.loadingTransaction').hide();
+            $('.loadingAnim').hide();
         },
         success: function(data){
             var accounts = JSON.parse(data.accounts)
@@ -411,7 +595,7 @@ function loadTransaction(){
                     if (transaction[y].fields.entryDate == transaction_date[x].fields.entryDate) {
                         if (transaction[y].fields.type == 'Income') {
                             var transactionDivSubSub =
-                            `<div class="transactionDivSubSub divIncome" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectTransaction(${transaction[y].pk})">
+                            `<div class="transactionDivSubSub divIncome" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Income</span>:
                                     <span class="transCategory">${transaction[y].fields.category}</span>
@@ -426,7 +610,7 @@ function loadTransaction(){
                         }
                         if (transaction[y].fields.type == 'Expense') {
                             var transactionDivSubSub =
-                            `<div class="transactionDivSubSub divExpense" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectTransaction(${transaction[y].pk})">
+                            `<div class="transactionDivSubSub divExpense" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Expense</span>:
                                     <span class="transCategory">${transaction[y].fields.category}</span>
@@ -442,7 +626,7 @@ function loadTransaction(){
                         }
                         if (transaction[y].fields.type == 'Transfer') {
                             var transactionDivSubSub =
-                            `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectTransaction(${transaction[y].pk})">
+                            `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Transfer</span>:
                                     <span class="transCategory">${transaction[y].fields.category}</span> from
@@ -463,6 +647,21 @@ function loadTransaction(){
             getDailyChange()
         }
     })
+}
+
+// misc
+function getTodayDate(){
+    var dd = moment().date();
+    var mm = moment().month()+1;
+    var yy = moment().year();
+    if (mm<10) {
+        mm = '0'+mm;
+    }
+    if (dd<10) {
+        dd = '0'+dd;
+    }
+    var todayDate = (yy + '-' + mm + '-' + dd)
+    return todayDate
 }
 
 function removeData(chart){ //clear data from chart
@@ -487,31 +686,11 @@ function getDailyChange(){ //sum up total for the day
     })
 }
 
-function selectTransaction(trans_id){
-    $('.editEntryHiddendiv').html(`
-        <input type="hidden" id="entry_id" value="${trans_id}">
-    `)
-}
-
-function categoryDetail(category_id, category_name){
-    $('#edit_category_input').val(category_name)
-    $('.inviForm').html(`
-        <input type="hidden" name="category_id" value="${category_id}">
-    `)
-}
-
-function addCategory(){
-    $('#edit_category_input').val()
-    $('#categoryModalbutton2').html("Add")
-}
-
-function accountDetail(account_id, account_name, account_balance, account_type){
-    $('#edit_account_name').val(account_name)
-    $('#edit_account_balance').val(account_balance)
-    $('#edit_account_type').val(account_type)
-    $('.inviForm').html(`
-        <input type="hidden" name="account_id" value="${account_id}">
-    `)
+// modal and tab
+function hideModal(){
+    $('.modal').hide()
+    $('.modal-backdrop').hide()
+    $('.editEntryForm').hide()
 }
 
 function openTab(env, tab_name){

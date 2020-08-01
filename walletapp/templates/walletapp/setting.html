@@ -1,18 +1,30 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Settings{% endblock %}
 {% block body %}
+
+<!-- loading -->
+<div class="loadingAnim" style="text-align:center;display:hidden;">
+    {% load static %}
+    <div class="loadingAnimSub col-4">
+        <img src="{% static 'walletapp/images/loading.gif' %}"/>
+        <p>Please Wait</p>
+    </div>
+</div>
+
 <hr>
 <div class="categoryContainer col-md-5">
-    <div class="accountContainerHeader" style="display:flex;">
+    <div class="categoryContainerHeader" style="display:flex;">
         <h5>Category</h5>
         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addCategoryModal" name="button">Add</button>
     </div>
-    {% for item in category %}
-    <div class="categorySub">
-        <span>{{item.category}}</span>
-        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
+    <div class="categoryContainerBody">
+        {% for item in category %}
+        <div class="categorySub">
+            <span>{{item.category}}</span>
+            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 <hr>
 <div class="accountContainer col-md-5">
@@ -20,12 +32,14 @@
         <h5>Accounts</h5>
         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addAccountModal" name="button">Add</button>
     </div>
-    {% for item in accounts %}
-    <div class="accountSub">
-        <span>{{item}}</span>
-        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
+    <div class="accountContainerBody">
+        {% for item in accounts %}
+        <div class="accountSub">
+            <span>{{item}}</span>
+            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 <hr>
 
@@ -45,7 +59,7 @@
                     <div class="inviForm"></div>
                     <label for="add_category_input">New category</label>
                     <input type="text" class="form-control add_category_input" name="add_category_input" id="add_category_input">
-                    <button type="button" class="btn btn-primary addNewCategory">Test</button>
+                    <button type="button" class="btn btn-primary addNewCategory">Add</button>
                 </form>
             </div>
         </div>
@@ -63,23 +77,18 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="deleteCategory" method="post">
-                    {% csrf_token %}
-                    <div class="inviForm"></div>
-                    <button type="submit" class="btn btn-danger" id="categoryModalButton1">Delete</button>
-                </form>
-                <form action="editCategory" method="post">
-                    {% csrf_token %}
-                    <div class="inviForm"></div>
-                    <input type="text" class="form-control" name="edit_category_input" id="edit_category_input">
-                    <button type="submit" class="btn btn-primary" id="categoryModalButton2">Edit</button>
-                </form>
+                <div class="inviForm"></div>
+                <input type="text" class="form-control edit_category_input">
+                <div style="display:flex;">
+                    <button type="button" class="btn btn-danger deleteCategoryConfirm" >Delete</button>
+                    <button type="button" class="btn btn-primary editCategoryConfirm">Edit</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- edit or delete account//////////////////////////////////////////////// -->
+<!-- edit or delete account -->
 <div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -90,33 +99,25 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="deleteAccount" method="post">
-                    {% csrf_token %}
-                    <div class="inviForm"></div>
-                    <button type="submit" class="btn btn-danger" name="button">Delete</button>
-                </form>
-                <form action="editAccount" method="post">
-                    {% csrf_token %}
-                    <div class="inviForm"></div>
-                    <label for="edit_account_name">Account Name</label>
-                    <input type="text" class="form-control" name="edit_account_name" id="edit_account_name">
-                    <label for="edit_account_balance">Account Balance</label>
-                    <input type="text" class="form-control" name="edit_account_balance" id="edit_account_balance">
-                    <label for="edit_account_type">Account Type</label>
-                    <!-- <input type="text" class="form-control" name="edit_account_type" id="edit_account_type"> -->
-                    <select class="form-control" name="edit_account_type" id="edit_account_type">
-                        {% for item in accountTypes %}
-                            <option value="">{{item.accountType}}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="btn btn-primary" name="button">Edit</button>
-                </form>
+                <div class="inviForm"></div>
+                <label for="edit_account_name">Account Name</label>
+                <input type="text" class="form-control edit_account_name">
+                <label for="edit_account_balance">Account Balance</label>
+                <input type="text" class="form-control edit_account_balance">
+                <label for="edit_account_type">Account Type</label>
+                <select class="form-control edit_account_type">
+                    {% for item in accountTypes %}
+                        <option value="{{item.accountType}}">{{item.accountType}}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="btn btn-primary editAccountConfirm">Edit</button>
+                <button type="button" class="btn btn-danger deleteAccountConfirm">Delete</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- add account modal//////////////////////////////////////////////////// -->
+<!-- add account modal -->
 <div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -127,19 +128,17 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="addAccount" method="post">
-                    {% csrf_token %}
-                    <div class="inviForm"></div>
-                    <label for="edit_account_name">Account Name</label>
-                    <input type="text" class="form-control" name="add_account_name" id="add_account_name">
-                    <label for="edit_account_balance">Account Balance</label>
-                    <input type="text" class="form-control" name="add_account_balance" id="add_account_balance">
-                    <label for="edit_account_type">Account Type</label>
-                    <input type="text" class="form-control" name="add_account_type" id="add_account_type">
-                    <button type="submit" class="btn btn-primary" name="button">Add</button>
-                </form>
+                <div class="inviForm"></div>
+                <label for="edit_account_name">Account Name</label>
+                <input type="text" class="form-control add_account_name">
+                <label for="edit_account_balance">Account Balance</label>
+                <input type="text" class="form-control add_account_balance">
+                <label for="edit_account_type">Account Type</label>
+                <input type="text" class="form-control add_account_type">
+                <button type="button" class="btn btn-primary addAccountConfirm">Add</button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

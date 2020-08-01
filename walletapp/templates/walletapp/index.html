@@ -33,7 +33,7 @@
             <input type="hidden" name="filterDateEnd" id="filterDateEnd">
             <button type="button" class="btn btn-primary btn-md form-control" id="filterButton">Filter</button>
         </form>
-        <button class="btn btn-success btn-block" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">New Transaction</button>
+        <button class="btn btn-success btn-block form-control" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">New Transaction</button>
     </div>
 
     <!-- clearfilter -->
@@ -45,9 +45,9 @@
 <!-- transactions div -->
 <div class="container">
     <!-- loading animation -->
-    <div class="loadingTransaction" style="text-align:center;display:hidden;">
+    <div class="loadingAnim" style="text-align:center;display:hidden;">
         {% load static %}
-        <div class="loadingTransactionSub col-4">
+        <div class="loadingAnimSub col-4">
             <img src="{% static 'walletapp/images/loading.gif' %}"/>
             <p>Please Wait</p>
         </div>

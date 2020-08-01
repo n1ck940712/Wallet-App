@@ -15,6 +15,7 @@ if superuser.count() == 0:
     superuser.is_staff = True
     superuser.save()
 
+# load pages
 def index(request):
     if not request.user.is_authenticated:
         return render(request, "walletapp/login.html", {"message": "Login first"})
@@ -26,63 +27,16 @@ def index(request):
     }
     return render(request, "walletapp/index.html", context)
 
-def filterTransaction(request):
-    filter_flag = False
-    filter_type = request.GET.get('filterType')
-    filter_category = request.GET.get('filterCategory')
-    filter_note = request.GET.get('filterNote')
-    filter_account = request.GET.get('filterAccount')
-    filter_date_start = request.GET.get('filterDateStart')
-    filter_date_end = request.GET.get('filterDateEnd')
-    if filter_type != "" and filter_flag == True:
-        transaction_result = transaction_result.filter(type=filter_type)
-        filter_flag = True
-    elif filter_type != "":
-        transaction_result = dbEntry.objects.filter(type=filter_type)
-        filter_flag = True
-    if filter_category != "" and filter_flag == True:
-        transaction_result = transaction_result.filter(category=filter_category)
-        filter_flag = True
-    elif filter_category !="":
-        transaction_result = dbEntry.objects.filter(category=filter_category)
-        filter_flag = True
-    if filter_note != "" and filter_flag == True:
-        transaction_result = transaction_result.filter(entryNote=filter_note)
-        filter_flag = True
-    elif filter_note != "":
-        transaction_result = dbEntry.objects.filter(entryNote=filter_note)
-        filter_flag = True
-    if filter_account != "" and filter_flag == True:
-        transaction_result = transaction_result.filter(fromAccount=filter_account)|transaction_result.filter(toAccount=filter_account)
-        filter_flag = True
-    elif filter_account != "":
-        transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
-        filter_flag = True
-    # Date filtering
-    if filter_date_end == filter_date_start and filter_date_start != "":
-        if filter_flag == True:
-            transaction_result = transaction_result.filter(entryDate=filter_date_start)
-            filter_flag = True
-        else:
-            transaction_result = dbEntry.objects.filter(entryDate=filter_date_start)
-            filter_flag = True
-    elif filter_date_end != filter_date_start:
-        if filter_flag == True:
-            transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
-        else:
-            transaction_result = dbEntry.objects.filter(entryDate__range=[filter_date_start, filter_date_end])
-            filter_flag = True
-    if filter_flag == False:
-        transaction_result = dbEntry.objects.all()
-    data = {
-    # "user": list(request.user),
-    "category": serializers.serialize('json', dbCategory.objects.all().order_by("category")),
-    "transaction": serializers.serialize('json', transaction_result.order_by('-entryDate')),
-    "transaction_date": serializers.serialize('json', transaction_result.order_by('-entryDate').distinct('entryDate')),
-    "accounts": serializers.serialize('json', dbAccount.objects.all().order_by("accountName")),
+def settingPage(request):
+    context = {
+    "user": request.user,
+    "category": dbCategory.objects.all().order_by("category"),
+    "transaction": dbEntry.objects.all().reverse(),
+    "accounts": dbAccount.objects.all().order_by("accountName"),
+    "accountTypes": dbAccount.objects.distinct('accountType').order_by('accountType'),
     "message": None,
     }
-    return JsonResponse(data)
+    return render(request, "walletapp/setting.html", context)
 
 def overview(request):
     if request.method=="GET":
@@ -152,6 +106,7 @@ def overviewAjax(request):
     }
     return JsonResponse(context, content_type="application/json", safe=False)
 
+# entry
 def addEntry(request):
     if request.method == "POST":
         new_entry_type = request.POST.get('new_entry_type')
@@ -182,29 +137,6 @@ def addEntry(request):
         data = {
         'message': 'New transaction added.'
         }
-    return JsonResponse(data)
-
-def deleteEntry(request):
-    del_entry = dbEntry.objects.get(pk=request.GET.get('entry_id'))
-    if del_entry.type=="Expense":
-        get_account = dbAccount.objects.get(accountName=del_entry.fromAccount)
-        get_account.accountBalance=str(float(get_account.accountBalance)+float(del_entry.amount))
-        get_account.save()
-    if del_entry.type=="Income":
-        get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
-        get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
-        get_account.save()
-    if del_entry.type=="Transfer":
-        get_account_from = dbAccount.objects.get(accountName=del_entry.fromAccount)
-        get_account_to = dbAccount.objects.get(accountName=del_entry.toAccount)
-        get_account_from.accountBalance=str(float(get_account_from.accountBalance)+float(del_entry.amount))
-        get_account_to.accountBalance=str(float(get_account_to.accountBalance)-float(del_entry.amount))
-        get_account_to.save()
-        get_account_from.save()
-    del_entry.delete()
-    data = {
-        'message': 'Transaction deleted'
-    }
     return JsonResponse(data)
 
 def editEntry(request):
@@ -300,6 +232,164 @@ def editEntryConfirm(request):
     }
     return JsonResponse(data)
 
+def deleteEntry(request):
+    del_entry = dbEntry.objects.get(pk=request.GET.get('entry_id'))
+    if del_entry.type=="Expense":
+        get_account = dbAccount.objects.get(accountName=del_entry.fromAccount)
+        get_account.accountBalance=str(float(get_account.accountBalance)+float(del_entry.amount))
+        get_account.save()
+    if del_entry.type=="Income":
+        get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
+        get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
+        get_account.save()
+    if del_entry.type=="Transfer":
+        get_account_from = dbAccount.objects.get(accountName=del_entry.fromAccount)
+        get_account_to = dbAccount.objects.get(accountName=del_entry.toAccount)
+        get_account_from.accountBalance=str(float(get_account_from.accountBalance)+float(del_entry.amount))
+        get_account_to.accountBalance=str(float(get_account_to.accountBalance)-float(del_entry.amount))
+        get_account_to.save()
+        get_account_from.save()
+    del_entry.delete()
+    data = {
+        'message': 'Transaction deleted'
+    }
+    return JsonResponse(data)
+
+def loadEntry(request):
+    filter_flag = False
+    filter_type = request.GET.get('filterType')
+    filter_category = request.GET.get('filterCategory')
+    filter_note = request.GET.get('filterNote')
+    filter_account = request.GET.get('filterAccount')
+    filter_date_start = request.GET.get('filterDateStart')
+    filter_date_end = request.GET.get('filterDateEnd')
+    if filter_type != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(type=filter_type)
+        filter_flag = True
+    elif filter_type != "":
+        transaction_result = dbEntry.objects.filter(type=filter_type)
+        filter_flag = True
+    if filter_category != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(category=filter_category)
+        filter_flag = True
+    elif filter_category !="":
+        transaction_result = dbEntry.objects.filter(category=filter_category)
+        filter_flag = True
+    if filter_note != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(entryNote=filter_note)
+        filter_flag = True
+    elif filter_note != "":
+        transaction_result = dbEntry.objects.filter(entryNote=filter_note)
+        filter_flag = True
+    if filter_account != "" and filter_flag == True:
+        transaction_result = transaction_result.filter(fromAccount=filter_account)|transaction_result.filter(toAccount=filter_account)
+        filter_flag = True
+    elif filter_account != "":
+        transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
+        filter_flag = True
+    # Date filtering
+    if filter_date_end == filter_date_start and filter_date_start != "":
+        if filter_flag == True:
+            transaction_result = transaction_result.filter(entryDate=filter_date_start)
+            filter_flag = True
+        else:
+            transaction_result = dbEntry.objects.filter(entryDate=filter_date_start)
+            filter_flag = True
+    elif filter_date_end != filter_date_start:
+        if filter_flag == True:
+            transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
+        else:
+            transaction_result = dbEntry.objects.filter(entryDate__range=[filter_date_start, filter_date_end])
+            filter_flag = True
+    if filter_flag == False:
+        transaction_result = dbEntry.objects.all()
+    data = {
+    # "user": list(request.user),
+    "category": serializers.serialize('json', dbCategory.objects.all().order_by("category")),
+    "transaction": serializers.serialize('json', transaction_result.order_by('-entryDate')),
+    "transaction_date": serializers.serialize('json', transaction_result.order_by('-entryDate').distinct('entryDate')),
+    "accounts": serializers.serialize('json', dbAccount.objects.all().order_by("accountName")),
+    "message": None,
+    }
+    return JsonResponse(data)
+
+# category
+def addCategory(request):
+    if request.method == "POST":
+        edit_category = dbCategory(category=request.POST['new_category_name'])
+        edit_category.save()
+    data = {
+        'message': 'add category success'
+    }
+    return JsonResponse(data)
+
+def editCategory(request):
+    if request.method == "POST":
+        edit_category = dbCategory.objects.get(pk=request.POST['category_id'])
+        edit_category.category=request.POST['edit_category_input']
+        edit_category.save()
+    data = {
+        'message': 'edit category success',
+    }
+    return JsonResponse(data)
+
+def deleteCategory(request):
+    delete_category = dbCategory.objects.get(pk=request.GET.get('category_id'))
+    delete_category.delete()
+    data = {
+        'message': 'delete category successful',
+    }
+    return JsonResponse(data)
+
+def loadCategory(request):
+    get_category = dbCategory.objects.all().order_by('category')
+    data = {
+        'category': serializers.serialize('json', get_category),
+    }
+    return JsonResponse(data)
+
+# account
+def addAccount(request):
+    if request.method == "POST":
+        edit_account = dbAccount(accountName = request.POST['add_account_name'], accountBalance = request.POST['add_account_balance'], accountType = request.POST['add_account_type'])
+        edit_account.save()
+        if request.POST.get('add_account_balance') != '0':
+            account_first_entry = dbEntry(amount=request.POST.get('add_account_balance'), category='system', fromAccount='Income', toAccount=request.POST.get('add_account_name'), entryNote='system', type='Income')
+            account_first_entry.save()
+    data = {
+        'message': 'add account successful'
+    }
+    return JsonResponse(data)
+
+def editAccount(request):
+    if request.method == "POST":
+        edit_account = dbAccount.objects.get(pk=request.POST['account_id'])
+        edit_account.accountName = request.POST.get('edit_account_name')
+        edit_account.accountBalance = request.POST.get('edit_account_balance')
+        edit_account.accountType = request.POST.get('edit_account_type')
+        edit_account.save()
+    data = {
+        'message': 'edit account success'
+    }
+    return JsonResponse(data)
+
+def deleteAccount(request):
+    if request.method == "POST":
+        delete_account = dbAccount.objects.get(pk=request.POST['account_id'])
+        delete_account.delete()
+    data = {
+        'message': 'delete account successful'
+    }
+    return JsonResponse(data)
+
+def loadAccount(request):
+    get_account = dbAccount.objects.all().order_by('accountName')
+    data = {
+        'account': serializers.serialize('json', get_account),
+    }
+    return JsonResponse(data)
+
+# signin signout
 def signin(request):
     if request.method=="POST":
         email=request.POST.get("email")
@@ -316,57 +406,3 @@ def signin(request):
 def signout(request):
     logout(request)
     return render(request, "walletapp/login.html", {"message":"Successfully logged out."})
-
-def settingPage(request):
-    context = {
-    "user": request.user,
-    "category": dbCategory.objects.all().order_by("category"),
-    "transaction": dbEntry.objects.all().reverse(),
-    "accounts": dbAccount.objects.all().order_by("accountName"),
-    "accountTypes": dbAccount.objects.distinct('accountType').order_by('accountType'),
-    "message": None,
-    }
-    return render(request, "walletapp/setting.html", context)
-
-def deleteCategory(request):
-    if request.method == "POST":
-        delete_category = dbCategory.objects.get(pk=request.POST['category_id'])
-        delete_category.delete()
-    return HttpResponseRedirect(reverse("settingPage"))
-
-def editCategory(request):
-    if request.method == "POST":
-        edit_category = dbCategory.objects.get(pk=request.POST['category_id'])
-        edit_category.category=request.POST['edit_category_input']
-        edit_category.save()
-    return HttpResponseRedirect(reverse("settingPage"))
-
-def addCategory(request):
-    if request.method == "POST":
-        edit_category = dbCategory(category=request.POST['new_category_name'])
-        edit_category.save()
-    data = {
-        'message': 'success'
-    }
-    return JsonResponse(data)
-
-def deleteAccount(request):
-    if request.method == "POST":
-        delete_account = dbAccount.objects.get(pk=request.POST['account_id'])
-        delete_account.delete()
-    return HttpResponseRedirect(reverse("settingPage"))
-
-def editAccount(request):
-    if request.method == "POST":
-        edit_account = dbAccount.objects.get(pk=request.POST['account_id'])
-        edit_account.accountName = request.POST['edit_account_name']
-        edit_account.accountBalance = request.POST['edit_account_balance']
-        edit_account.accountType = request.POST['edit_account_type']
-        edit_account.save()
-    return HttpResponseRedirect(reverse("settingPage"))
-
-def addAccount(request):
-    if request.method == "POST":
-        edit_account = dbAccount(accountName = request.POST['add_account_name'], accountBalance = request.POST['add_account_balance'], accountType = request.POST['add_account_type'])
-        edit_account.save()
-    return HttpResponseRedirect(reverse("settingPage"))
