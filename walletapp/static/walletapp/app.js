@@ -1,130 +1,35 @@
 $(document).ready(function (){
 
 
-    if (window.location.pathname=='/') {loadEntry()} // transaction page specific scripts
-    if (window.location.pathname=='/overview') { //overview page scripts
-        var color = Chart.helpers.color;
-        var expenseChartCanvas = document.getElementById('expenseChart').getContext('2d'); // init expense chart
-        var expenseChart = new Chart(expenseChartCanvas, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    label: 'Total',
-                    backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
-                    borderColor: window.chartColors.red,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                title: {
-                    display: true,
-                    text: 'Expense'
-                },
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        });
-        var balanceChartCanvas = document.getElementById("balanceChart").getContext("2d"); //init balance chart
-        var balanceChart = new Chart(balanceChartCanvas, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Account Balance',
-                    data: [],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    xAxes: [{
-                        type: 'time',
-                        gridLines: {
-                            show: false
-                        }
-                    }],
-                    yAxes: [{
-                        gridLines: {
-                            show: false
-                        },
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }]
-                }
-            }
-        });
-        // click event listener accountdiv
-        $('.accountDiv').click(function(){
-            $(this).siblings().removeClass('selectedAccount').addClass('notSelectedAccount')
-            $(this).addClass('selectedAccount').removeClass('notSelectedAccount')
-            $.ajax({
-                type: 'GET',
-                url: 'overviewAjax',
-                data: {
-                    "selected_account": $('.selectedAccount').attr('id')
-                },
-                success: function(data) {
-                    // console.log(data)
-                    var transaction = JSON.parse(data.transaction)
-                    var transaction_category = data.transaction_category
+// transaction page
+    if (window.location.pathname=='/') {loadEntry()}
 
-                    $('#totalIncome').text("$ "+data.total_income)
-                    $('#totalExpense').text("$ "+data.total_expense)
-                    $('#totalChange').text("$ "+data.total_change)
-                    $('#totalTransfer').text("$ "+data.total_transfer)
-
-                    removeData(balanceChart)
-                    removeData(expenseChart)
-
-                    // update account balance chart
-                    var latest_balance = parseInt(JSON.parse(data.selected_account_balance)[0].fields.accountBalance)
-                    var balance_history = (data.balance_history).reverse()
-                    var bal_history_date = []
-                    var bal_history_amount = []
-                    balanceChart.data.datasets[0].data.push(latest_balance)
-                    for (var item in balance_history) {
-                        latest_balance -= balance_history[item].total
-                        balanceChart.data.datasets[0].data.push(latest_balance)
-                        balanceChart.data.labels.push(balance_history[item].entryDate)
-                    }
-                    balanceChart.update()
-
-                    //update expense chart
-                    for (var item in transaction_category) {
-                        expenseChart.data.labels.push(transaction_category[item].category);
-                        expenseChart.data.datasets[0].data.push(Math.abs(transaction_category[item].total));
-                    }
-                    expenseChart.update();
-                }
-            })
-        })
-    }
-
-    // filter button
     $('#filterButton').click(function(){
         loadEntry()
     })
-    // date picker
+
     $('#filterDate').daterangepicker({
         "opens": "left"
     });
+
     $('#filterDate').val('All Time')
-    // clear date button
+
     $('#filterDate').on('cancel.daterangepicker', function(ev, picker) {
         $('#filterDate').val('All Time');
         $('#filterDateStart').val('')
         $('#filterDateEnd').val('')
+        if (window.location.pathname=='/overview'){
+            console.log('clear')
+            loadOverview()
+        }
     });
     $('#filterDate').on('apply.daterangepicker', function(ev, picker) {
         $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
         $('#filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
+        if (window.location.pathname=='/overview'){
+            console.log('apply')
+            loadOverview()
+        }
     });
     $('#filterDate').on('show.daterangepicker', function(ev, picker) {
         $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
@@ -183,6 +88,112 @@ $(document).ready(function (){
         deleteAccount()
     })
 
+// overview page
+    if (window.location.pathname=='/overview') {
+        loadOverview()
+        var color = Chart.helpers.color;
+        var expenseChartCanvas = document.getElementById('expenseChart').getContext('2d'); // init expense chart
+        expenseChart = new Chart(expenseChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    label: 'Expense',
+                    backgroundColor: [
+						window.chartColors.red,
+						window.chartColors.orange,
+						window.chartColors.yellow,
+						window.chartColors.green,
+						window.chartColors.blue,
+					],
+                }],
+            },
+            options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: 'Expense'
+                },
+            }
+        });
+        var incomeChartCanvas = document.getElementById('incomeChart').getContext('2d'); // init income chart
+        incomeChart = new Chart(incomeChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    label: 'Income',
+                    backgroundColor: [
+						window.chartColors.red,
+						window.chartColors.orange,
+						window.chartColors.yellow,
+						window.chartColors.green,
+						window.chartColors.blue,
+					],
+                }],
+            },
+            options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: 'Income'
+                },
+            }
+        });
+
+        var balanceChartCanvas = document.getElementById("balanceChart").getContext("2d"); //init balance chart
+        balanceChart = new Chart(balanceChartCanvas, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Account Balance',
+                    data: [],
+                    borderWidth: 1,
+                    backgroundColor: [
+						window.chartColors.blue,
+					],
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        time: {
+                            unit: 'day'
+                        },
+                        gridLines: {
+                            show: false
+                        }
+                    }],
+                    yAxes: [{
+                        gridLines: {
+                            show: false
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                title: {
+                    display: true,
+                    text: 'Balance'
+                },
+                legend: {
+                    display: false
+                },
+            }
+        });
+    }
+
+    $('.accountDiv').click(function(){
+        $(this).siblings().removeClass('selectedAccount').addClass('notSelectedAccount')
+        $(this).addClass('selectedAccount').removeClass('notSelectedAccount')
+        getAccountOverview()
+    })
+
 })
 // end of window.load
 
@@ -191,6 +202,99 @@ $(document).ready(function (){
 //////////////////////////////////////////////////////////////////////////////////////
 // functions /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
+
+function loadOverview(){
+    $('.overviewContainer').children(':first').addClass('selectedAccount').removeClass('notSelectedAccount')
+    getAccountOverview()
+}
+
+function getAccountOverview(){
+    var filter_start_date = $('#filterDateStart').val()
+    var filter_end_date = $('#filterDateEnd').val()
+    var filter_end_date_plus1 = new Date(filter_end_date)
+    filter_end_date_plus1.setDate(filter_end_date_plus1.getDate()+1)
+    $.ajax({
+        type: 'GET',
+        url: 'getAccountOverview',
+        data: {
+            "selected_account": $('.selectedAccount').attr('id'),
+            'filter_date_start': filter_start_date,
+            'filter_date_end': filter_end_date,
+            'filter_date_end+1': convertDate(filter_end_date_plus1),
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        complete: function(){
+            $('.loadingAnim').hide()
+        },
+        success: function(data) {
+            console.log(data)
+            var transaction = JSON.parse(data.transaction)
+            var expense_category = data.expense_category
+            var income_category = data.income_category
+
+            $('#totalIncome').text("$ "+data.total_income)
+            $('#totalExpense').text("$ "+data.total_expense)
+            $('#totalChange').text("$ "+data.total_change)
+            $('#totalTransfer').text("$ "+data.total_transfer)
+
+            removeData(balanceChart)
+            removeData(expenseChart)
+            removeData(incomeChart)
+
+            // update account balance chart
+            var latest_balance = data.selected_account_balance
+            var balance_history = (data.balance_history).reverse()
+            var bal_history_date = []
+            var bal_history_amount = []
+            balanceChart.data.datasets[0].data.push(latest_balance) //plot first data point
+            var array_last_item = balance_history.length-1
+            if ((balance_history[0].entryDate != filter_end_date) && filter_end_date !='') {
+                console.log('last day not included')
+                console.log(balance_history[0].entryDate)
+                console.log($('#filterDateEnd').val())
+                balanceChart.data.labels.push($('#filterDateEnd').val())
+                balanceChart.data.datasets[0].data.push(latest_balance)
+            }
+            for (var item in balance_history) {
+                latest_balance -= balance_history[item].total
+                balanceChart.data.datasets[0].data.push(latest_balance)
+                balanceChart.data.labels.push(balance_history[item].entryDate)
+                if (item < array_last_item) {
+                    var date1 = new Date(balance_history[item].entryDate)
+                    var date2 = new Date(balance_history[parseInt(item)+1].entryDate)
+                    var day_interval =  date1.getDate() - date2.getDate()
+                    if (day_interval > 1) {
+                        date1.setDate(date1.getDate()-1)
+                        balanceChart.data.labels.push(convertDate(date1))
+                        balanceChart.data.datasets[0].data.push(latest_balance)
+
+                    }
+                }
+            }
+            var dateVar = new Date(balance_history[array_last_item].entryDate)
+            dateVar.setDate(dateVar.getDate()-1)
+            balanceChart.data.labels.push(convertDate(dateVar))
+            balanceChart.update()
+            // console.log(balanceChart.data)
+
+            //update expense chart
+            for (var item in expense_category) {
+                expenseChart.data.labels.push(expense_category[item].category);
+                expenseChart.data.datasets[0].data.push(Math.abs(expense_category[item].total));
+            }
+            expenseChart.update();
+
+            //update income chart
+            for (var item in income_category) {
+                incomeChart.data.labels.push(income_category[item].category);
+                incomeChart.data.datasets[0].data.push(Math.abs(income_category[item].total));
+            }
+            incomeChart.update();
+        }
+    })
+}
 
 // account
 function addAccount(){
@@ -437,10 +541,10 @@ function editEntry(entry_id){
             'entry_id': entry_id,
         },
         beforeSend: function () {
-            $('#loadingAnim').show();
+            $('.loadingAnim').show();
         },
         complete: function () {
-            $('#loadingAnim').hide();
+            $('.loadingAnim').hide();
         },
         success: function(data){
             var accounts = JSON.parse(data.accounts)
@@ -511,6 +615,12 @@ function editEntryConfirm(){
             'edit_entry_amount': $('.edit_entry_amount').val(),
             'edit_entry_category': $('.edit_entry_category').val(),
         },
+        beforeSend: function () {
+            $('.loadingAnim').show();
+        },
+        complete: function () {
+            $('.loadingAnim').hide();
+        },
         success: function(data){
             hideModal()
             var entry_change_flag = JSON.parse(data.entry_change_flag)
@@ -528,6 +638,9 @@ function deleteEntry(entry_id){
         url: 'deleteEntry',
         data: {
             'entry_id': entry_id,
+        },
+        beforeSend: function () {
+            $('.loadingAnim').show();
         },
         success: function(data){
             hideModal()
@@ -624,7 +737,7 @@ function loadEntry(){
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
                         }
-                        if (transaction[y].fields.type == 'Transfer') {
+                        if ((transaction[y].fields.type == 'Transfer') || (transaction[y].fields.type == 'System')) {
                             var transactionDivSubSub =
                             `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
@@ -650,6 +763,21 @@ function loadEntry(){
 }
 
 // misc
+function convertDate(date) {
+    var month = parseInt(date.getMonth())+1
+    if (date.getMonth()<10) {
+        month = "0"+month
+    }
+    if (date.getDate()<10) {
+        var day = "0"+date.getDate()
+    } else {
+        var day = date.getDate()
+    }
+    conv_date = date.getFullYear() +'-'+ month +'-'+ day
+    // console.log(conv_date)
+    return conv_date
+}
+
 function getTodayDate(){
     var dd = moment().date();
     var mm = moment().month()+1;
@@ -703,70 +831,3 @@ function openTab(env, tab_name){
 function closeTab(){
     $('.tabContent').hide()
 }
-
-// $('#filterNote').on('keyup', function(){ //event listener for filter note
-//     filter = $(this).val().toLowerCase()
-//     $('.transactionDivSubSub').find(".transNote").each(function(){ //filter for transaction note
-//         text = $(this).text().toLowerCase()
-//         if (text.indexOf(filter)!=-1) {
-//             $(this).parent('div').parent('div').show()
-//         }
-//         else {
-//             $(this).parent('div').parent('div').hide()
-//         }
-//     })
-//     getTransTotal()
-//
-// })
-//
-// $('#filterCategory').change(function(){ //event listener for filter category
-//     filter = $(this).val()
-//     $('.transactionDivSubSub').find(".transCategory").each(function(){ //filter for transaction category
-//         // var elementNum = $(this).parent().parent().parent()[0].childElementCount
-//         if ($(this).text().indexOf(filter)!=-1) {
-//             $(this).parent('div').parent('div').show()
-//         }
-//         else {
-//             $(this).parent('div').parent('div').hide()
-//         }
-//     })
-//     getTransTotal()
-// })
-//
-// $('#filterAccount').change(function(){ //event listener for filter account
-//     filter = $(this).val()
-//     $('.transactionDivSubSub').find(".transAccount").each(function(){ //filter for account
-//         if ($(this).text().indexOf(filter)!=-1) {
-//             $(this).parent('div').parent('div').show()
-//         }
-//         else {
-//             $(this).parent('div').parent('div').hide()
-//         }
-//     })
-//     getTransTotal()
-// })
-//
-// $('#filterType').change(function(){ //event listener for filter Type
-//     filter_type = $(this).val()
-//     filter_note = $('#filterNote').val()
-//     filter_account = $('#filterAccount').val()
-//     filter_category = $('#filterCategory').val()
-//     $('.transactionDivSubSub').find(".transType").each(function(){ //filter for transaction type
-//         if ($(this).text().indexOf(filter_type)!=-1) {
-//             $(this).parent('div').parent('div').show()
-//         }
-//         else {
-//             $(this).parent('div').parent('div').hide()
-//         }
-//     })
-//     $('.transactionDivSubSub').find(".transNote").each(function(){ //filter for transaction note
-//         text = $(this).text().toLowerCase()
-//         if (text.indexOf(filter_note)!=-1) {
-//             $(this).parent('div').parent('div').show()
-//         }
-//         else {
-//             $(this).parent('div').parent('div').hide()
-//         }
-//     })
-//     getTransTotal()
-// })

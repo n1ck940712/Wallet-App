@@ -51,6 +51,7 @@ html,body{
 
 .selectedAccount{
     background-color: #487542;
+    /* border: solid 2px green; */
 }
 
 .notSelectedAccount{
@@ -114,4 +115,11 @@ html,body{
 
 .editEntryForm{
     display: none;
+}
+
+.chartContainer{
+    background-color: #d1ddff;
+    border-radius: 5px;
+    margin: 5px;
+    padding: 5px;
 }

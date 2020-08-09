@@ -39,47 +39,42 @@ def settingPage(request):
     return render(request, "walletapp/setting.html", context)
 
 def overview(request):
-    if request.method=="GET":
-        filtered_transaction = dbEntry.objects.all().order_by('-entryDate')
-    if request.method=="POST":
-        selected_account = request.POST.get('filterAccount')
-        filter_date_start = request.POST.get('filterDateStart')
-        filter_date_end = request.POST.get('filterDateEnd')
-        filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
-        filtered_transaction = filtered_transaction.filter(entryDate__range=[filter_date_start, filter_date_end])
-
-    total_change = float(0) ####total change calculation
-    total_income = float(0)
-    total_expense = float(0)
-    total_transfer = float(0)
-    for item in filtered_transaction:
-        if item.type == "Income":
-            total_change += float(item.amount)
-            total_income += float(item.amount)
-        if item.type == "Expense":
-            total_change -= float(item.amount)
-            total_expense += float(item.amount)
-        if item.type == "Transfer":
-            total_transfer += float(item.amount)
-
-    context = {
-    "user": request.user,
+    data = {
+    # "user": request.user,
     "accounts": dbAccount.objects.all().order_by("accountName"),
-    "transaction": filtered_transaction,
-    "total_change": total_change,
-    "total_income": total_income,
-    "total_expense": total_expense,
-    "total_transfer": total_transfer,
     "message": None,
     }
-    return render(request, "walletapp/overview.html", context)
+    return render(request, "walletapp/overview.html", data)
 
-def overviewAjax(request):
+
+def getAccountOverview(request): # overview graph
+
     selected_account = request.GET.get('selected_account')
-    filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
-    filtered_transaction_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Expense").values('category').annotate(total=Sum('amount'))
-    balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('entryDate').annotate(total=Sum('amount'))
-    selected_account_balance = dbAccount.objects.filter(accountName=selected_account)
+    filter_date_start = request.GET.get('filter_date_start')
+    filter_date_end = request.GET.get('filter_date_end')
+    filter_date_end_plus1 = request.GET.get('filter_date_end+1')
+
+    if (filter_date_start and filter_date_end) == '' : #no date filter
+        print('no date filter')
+        filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
+        filtered_expense_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Expense").values('category').annotate(total=Sum('amount'))
+        filtered_income_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Income").values('category').annotate(total=Sum('amount'))
+        balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('entryDate').annotate(total=Sum('amount'))
+        selected_account_balance = dbAccount.objects.get(accountName=selected_account).accountBalance
+
+    elif (filter_date_end != filter_date_start): #yes date filter
+        print('yes date filter')
+        filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).order_by('-entryDate')
+        filtered_expense_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).filter(type="Expense").values('category').annotate(total=Sum('amount'))
+        filtered_income_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).filter(type="Income").values('category').annotate(total=Sum('amount'))
+        balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).values('entryDate').annotate(total=Sum('amount'))
+
+        last_entry_date = dbEntry.objects.all().order_by('entryDate').last().entryDate
+        get_balance_at_date = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_end_plus1, last_entry_date]).order_by('-entryDate')
+        selected_account_balance = float(dbAccount.objects.get(accountName=selected_account).accountBalance)
+        print(get_balance_at_date)
+        for item in get_balance_at_date:
+            selected_account_balance -= float(item.amount)
 
     total_change = float(0) ####total change calculation
     total_income = float(0)
@@ -90,21 +85,23 @@ def overviewAjax(request):
             total_change += float(item.amount)
             total_income += float(item.amount)
         if item.type == "Expense":
-            total_change -= float(item.amount)
+            total_change += float(item.amount)
             total_expense += float(item.amount)
         if item.type == "Transfer":
             total_transfer += float(item.amount)
-    context = {
+
+    data = {
     "transaction": serializers.serialize("json", filtered_transaction),
-    "transaction_category": list(filtered_transaction_category),
+    "expense_category": list(filtered_expense_category),
+    "income_category": list(filtered_income_category),
     "balance_history": list(balance_history),
     "total_change": total_change,
     "total_income": total_income,
     "total_expense": total_expense,
     "total_transfer": total_transfer,
-    "selected_account_balance": serializers.serialize("json", selected_account_balance),
+    "selected_account_balance": selected_account_balance,
     }
-    return JsonResponse(context, content_type="application/json", safe=False)
+    return JsonResponse(data, content_type="application/json", safe=False)
 
 # entry
 def addEntry(request):
@@ -120,6 +117,7 @@ def addEntry(request):
             get_account = dbAccount.objects.get(accountName=new_entry_from)
             get_account.accountBalance=str(float(get_account.accountBalance)-float(new_entry_amount))
             get_account.save()
+            new_entry_amount = str(float(new_entry_amount)*(-1))
         if new_entry_type=="Income":
             get_account = dbAccount.objects.get(accountName=new_entry_to)
             get_account.accountBalance=str(float(get_account.accountBalance)+float(new_entry_amount))
@@ -132,7 +130,7 @@ def addEntry(request):
             get_account_to.save()
             get_account_from.save()
         new_entry = dbEntry(amount=new_entry_amount, category=new_entry_category, fromAccount=new_entry_from, toAccount=new_entry_to, entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
-        # new_entry.save()
+        new_entry.save()
 
         data = {
         'message': 'New transaction added.'
@@ -236,9 +234,13 @@ def deleteEntry(request):
     del_entry = dbEntry.objects.get(pk=request.GET.get('entry_id'))
     if del_entry.type=="Expense":
         get_account = dbAccount.objects.get(accountName=del_entry.fromAccount)
-        get_account.accountBalance=str(float(get_account.accountBalance)+float(del_entry.amount))
+        get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
         get_account.save()
     if del_entry.type=="Income":
+        get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
+        get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
+        get_account.save()
+    if del_entry.type=="System":
         get_account = dbAccount.objects.get(accountName=del_entry.toAccount)
         get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
         get_account.save()
@@ -353,9 +355,8 @@ def addAccount(request):
     if request.method == "POST":
         edit_account = dbAccount(accountName = request.POST['add_account_name'], accountBalance = request.POST['add_account_balance'], accountType = request.POST['add_account_type'])
         edit_account.save()
-        if request.POST.get('add_account_balance') != '0':
-            account_first_entry = dbEntry(amount=request.POST.get('add_account_balance'), category='system', fromAccount='Income', toAccount=request.POST.get('add_account_name'), entryNote='system', type='Income')
-            account_first_entry.save()
+        account_first_entry = dbEntry(amount=request.POST.get('add_account_balance'), category='System', fromAccount=request.POST.get('add_account_name'), toAccount=request.POST.get('add_account_name'), entryNote='New Account', type='System')
+        account_first_entry.save()
     data = {
         'message': 'add account successful'
     }
@@ -364,8 +365,14 @@ def addAccount(request):
 def editAccount(request):
     if request.method == "POST":
         edit_account = dbAccount.objects.get(pk=request.POST['account_id'])
-        edit_account.accountName = request.POST.get('edit_account_name')
-        edit_account.accountBalance = request.POST.get('edit_account_balance')
+        edit_account_balance = request.POST.get('edit_account_balance')
+        edit_account_name = request.POST.get('edit_account_name')
+        if edit_account.accountBalance != edit_account_balance:
+            balanceDiff = float(edit_account_balance) - float(edit_account.accountBalance)
+            balanceDiffEntry = dbEntry(amount=balanceDiff, category='System', fromAccount=edit_account_name, toAccount=edit_account_name, entryNote='Edit Account', type='System')
+            balanceDiffEntry.save()
+        edit_account.accountName = edit_account_name
+        edit_account.accountBalance = edit_account_balance
         edit_account.accountType = request.POST.get('edit_account_type')
         edit_account.save()
     data = {
