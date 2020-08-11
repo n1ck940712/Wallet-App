@@ -13,30 +13,30 @@
 
 <hr>
 <div class="categoryContainer col-md-5">
-    <div class="categoryContainerHeader" style="display:flex;">
+    <div class="categoryContainerHeader">
         <h5>Category</h5>
-        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addCategoryModal" name="button">Add</button>
+        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addCategoryModal" name="button">Add</button>
     </div>
     <div class="categoryContainerBody">
         {% for item in category %}
         <div class="categorySub">
-            <span>{{item.category}}</span>
-            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
+            <div>{{item.category}}</div>
+            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
         </div>
         {% endfor %}
     </div>
 </div>
 <hr>
 <div class="accountContainer col-md-5">
-    <div class="accountContainerHeader" style="display:flex;">
+    <div class="accountContainerHeader">
         <h5>Accounts</h5>
-        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addAccountModal" name="button">Add</button>
+        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addAccountModal" name="button">Add</button>
     </div>
     <div class="accountContainerBody">
         {% for item in accounts %}
         <div class="accountSub">
-            <span>{{item}}</span>
-            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
+            <div>{{item}}</div>
+            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
         </div>
         {% endfor %}
     </div>
@@ -44,11 +44,11 @@
 <hr>
 
 <!-- add category/ -->
-<div class="modal fade" id="addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+<div class="modal fade addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCategoryModalLabel">Category</h5>
+                <h5 class="modal-title addCategoryModalLabel">Category</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -58,7 +58,7 @@
                     {% csrf_token %}
                     <div class="inviForm"></div>
                     <label for="add_category_input">New category</label>
-                    <input type="text" class="form-control add_category_input" name="add_category_input" id="add_category_input">
+                    <input type="text" class="form-control add_category_input" name="add_category_input">
                     <button type="button" class="btn btn-primary addNewCategory">Add</button>
                 </form>
             </div>
@@ -67,11 +67,11 @@
 </div>
 
 <!-- edit or delete category/////////////////////////////////////////////////// -->
-<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+<div class="modal fade categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="categoryModalLabel">Category</h5>
+                <h5 class="modal-title categoryModalLabel">Category</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -89,11 +89,11 @@
 </div>
 
 <!-- edit or delete account -->
-<div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">
+<div class="modal fade accountModal" tabindex="-1" role="dialog" aria-labelledby="accountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="accountModalLabel">Account</h5>
+                <h5 class="modal-title accountModalLabel">Account</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -118,11 +118,11 @@
 </div>
 
 <!-- add account modal -->
-<div class="modal fade" id="addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+<div class="modal fade addAccountModal" tabindex="-1" role="dialog" aria-labelledby="addAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAccountModalLabel">New Account</h5>
+                <h5 class="modal-title addAccountModalLabel">New Account</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>

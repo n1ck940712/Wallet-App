@@ -24,17 +24,32 @@ html,body{
 .transactionDivSubSub{
     justify-content: space-between;
     border-radius: 5px;
-    padding: 0px 0px 0px 8px;
+    padding: 0px 8px 0px 8px;
     margin: 5px;
 }
+.transactionDivSubTitle{
+    padding: 5px 13px 0px 6px;
+    font-weight: bolder;
+}
 .divExpense{
-    background-color: #c93e3e;
+    background-color: #bf7171;
+    color: #700000;
+    font-weight: bold;
 }
 .divTransfer{
+    background-color: #7172bf;
+    color: #020061;
+    font-weight: bold;
+}
+.divSystem{
     background-color: #74757a;
+    font-weight: bold;
+
 }
 .divIncome{
-    background-color: #159e17;
+    background-color: #7bbf71;
+    color: #004f00;
+    font-weight: bold;
 }
 .tabContent{
     padding:10px;
@@ -66,9 +81,11 @@ html,body{
 }
 
 .summaryContainerSub{
-    background-color: #74757a;
+    display: flex;
     border-radius: 5px;
     margin: 5px;
+    padding: 0px 5px 0px 5px;
+    justify-content: space-between;
 }
 
 .transContr{
@@ -122,4 +139,27 @@ html,body{
     border-radius: 5px;
     margin: 5px;
     padding: 5px;
+}
+
+.modal{
+    top: 20%;
+}
+
+.categoryContainerHeader,
+.accountContainerHeader{
+    justify-content: space-between;
+    padding: 0px 5px 0px 6px;
+    display:flex;
+}
+
+.categorySub,
+.accountSub{
+    justify-content: space-between;
+    display:flex;
+    background-color: #757575;
+    color: black;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 0px 0px 0px 8px;
+    margin: 5px;
 }

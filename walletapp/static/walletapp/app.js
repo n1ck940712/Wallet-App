@@ -4,39 +4,39 @@ $(document).ready(function (){
 // transaction page
     if (window.location.pathname=='/') {loadEntry()}
 
-    $('#filterButton').click(function(){
+    $('.filterButton').click(function(){
         loadEntry()
     })
 
-    $('#filterDate').daterangepicker({
+    $('.filterDate').daterangepicker({
         "opens": "left"
     });
 
-    $('#filterDate').val('All Time')
+    $('.filterDate').val('All Time')
 
-    $('#filterDate').on('cancel.daterangepicker', function(ev, picker) {
-        $('#filterDate').val('All Time');
-        $('#filterDateStart').val('')
-        $('#filterDateEnd').val('')
+    $('.filterDate').on('cancel.daterangepicker', function(ev, picker) {
+        $('.filterDate').val('All Time');
+        $('.filterDateStart').val('')
+        $('.filterDateEnd').val('')
         if (window.location.pathname=='/overview'){
             console.log('clear')
             loadOverview()
         }
     });
-    $('#filterDate').on('apply.daterangepicker', function(ev, picker) {
-        $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
-        $('#filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
+    $('.filterDate').on('apply.daterangepicker', function(ev, picker) {
+        $('.filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
+        $('.filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
         if (window.location.pathname=='/overview'){
             console.log('apply')
             loadOverview()
         }
     });
-    $('#filterDate').on('show.daterangepicker', function(ev, picker) {
-        $('#filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
-        $('#filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
+    $('.filterdate').on('show.daterangepicker', function(ev, picker) {
+        $('.filterdateStart').val(picker.startDate.format('YYYY-MM-DD'))
+        $('.filterdateEnd').val(picker.endDate.format('YYYY-MM-DD'))
     });
 
-    $('#addEntryButton').click(function(){ //set today date when add entry
+    $('.addEntryButton').click(function(){ //set today date when add entry
         $(".new_entry_date").val(getTodayDate())
     })
 
@@ -44,22 +44,22 @@ $(document).ready(function (){
         addEntry()
     })
 
-    $('#clearFilterButton').click(function(){ // clear filter
-        $('#filterType').val('')
-        $('#filterNote').val('')
-        $('#filterAccount').val('')
-        $('#filterCategory').val('')
-        $('#filterDateStart').val('')
-        $('#filterDateEnd').val('')
+    $('.clearFilterButton').click(function(){ // clear filter
+        $('.filterType').val('')
+        $('.filterNote').val('')
+        $('.filterAccount').val('')
+        $('.filterCategory').val('')
+        $('.filterdateStart').val('')
+        $('.filterdateEnd').val('')
         loadEntry()
     })
 
     $('.entryDeleteButton').click(function(){ //delete entry
-        deleteEntry($('#entry_id').val())
+        deleteEntry($('.entry_id').val())
     })
 
     $('.entryEditButton').click(function(){ //edit entry
-        editEntry($('#entry_id').val())
+        editEntry($('.entry_id').val())
         $('.editEntryForm').show()
     })
 
@@ -209,8 +209,10 @@ function loadOverview(){
 }
 
 function getAccountOverview(){
-    var filter_start_date = $('#filterDateStart').val()
-    var filter_end_date = $('#filterDateEnd').val()
+    var filter_start_date = $('.filterDateStart').val()
+    var filter_end_date = $('.filterDateEnd').val()
+    console.log(filter_start_date)
+    console.log(filter_end_date)
     var filter_end_date_plus1 = new Date(filter_end_date)
     filter_end_date_plus1.setDate(filter_end_date_plus1.getDate()+1)
     $.ajax({
@@ -230,40 +232,40 @@ function getAccountOverview(){
         },
         success: function(data) {
             console.log(data)
-            var transaction = JSON.parse(data.transaction)
             var expense_category = data.expense_category
             var income_category = data.income_category
+            var daily_change = data.daily_change
+            var latest_balance = data.selected_account_balance
 
-            $('#totalIncome').text("$ "+data.total_income)
-            $('#totalExpense').text("$ "+data.total_expense)
-            $('#totalChange').text("$ "+data.total_change)
-            $('#totalTransfer').text("$ "+data.total_transfer)
+            $('.totalIncome').text("$ "+data.total_income.toFixed(2))
+            $('.totalExpense').text("$ "+data.total_expense.toFixed(2))
+            $('.totalChange').text("$ "+data.total_change.toFixed(2))
+            $('.totalTransfer').text("$ "+data.total_transfer.toFixed(2))
 
             removeData(balanceChart)
             removeData(expenseChart)
             removeData(incomeChart)
 
             // update account balance chart
-            var latest_balance = data.selected_account_balance
-            var balance_history = (data.balance_history).reverse()
-            var bal_history_date = []
-            var bal_history_amount = []
+            var keys = Object.keys(daily_change)
+            var array_last_item = keys.length-1
+
             balanceChart.data.datasets[0].data.push(latest_balance) //plot first data point
-            var array_last_item = balance_history.length-1
-            if ((balance_history[0].entryDate != filter_end_date) && filter_end_date !='') {
+            if ((keys[0] != filter_end_date) && filter_end_date !='') {
                 console.log('last day not included')
-                console.log(balance_history[0].entryDate)
-                console.log($('#filterDateEnd').val())
-                balanceChart.data.labels.push($('#filterDateEnd').val())
+                console.log(keys[0])
+                console.log($('.filterdateEnd').val())
+                balanceChart.data.labels.push($('.filterdateEnd').val())
                 balanceChart.data.datasets[0].data.push(latest_balance)
             }
-            for (var item in balance_history) {
-                latest_balance -= balance_history[item].total
+            for(var keys = Object.keys(daily_change), i = 0, end = keys.length; i < end; i++) {
+                var key = keys[i], value = daily_change[key];
+                latest_balance -= daily_change[keys[i]]
                 balanceChart.data.datasets[0].data.push(latest_balance)
-                balanceChart.data.labels.push(balance_history[item].entryDate)
-                if (item < array_last_item) {
-                    var date1 = new Date(balance_history[item].entryDate)
-                    var date2 = new Date(balance_history[parseInt(item)+1].entryDate)
+                balanceChart.data.labels.push(keys[i])
+                if (i < array_last_item) {
+                    var date1 = new Date(keys[i])
+                    var date2 = new Date(keys[i+1])
                     var day_interval =  date1.getDate() - date2.getDate()
                     if (day_interval > 1) {
                         date1.setDate(date1.getDate()-1)
@@ -272,8 +274,8 @@ function getAccountOverview(){
 
                     }
                 }
-            }
-            var dateVar = new Date(balance_history[array_last_item].entryDate)
+            };
+            var dateVar = new Date(keys[array_last_item])
             dateVar.setDate(dateVar.getDate()-1)
             balanceChart.data.labels.push(convertDate(dateVar))
             balanceChart.update()
@@ -392,7 +394,7 @@ function loadAccount(){
                 var accountSub = $(`
                     <div class="accountSub">
                         <span>${account[i].fields.accountName} (${account[i].fields.accountType}) - Balance: ${account[i].fields.accountBalance}</span>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#accountModal" onclick="accountDetail('${account[i].pk}', '${account[i].fields.accountName}', '${account[i].fields.accountBalance}', '${account[i].fields.accountType}')">Edit</button>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".accountModal" onclick="accountDetail('${account[i].pk}', '${account[i].fields.accountName}', '${account[i].fields.accountBalance}', '${account[i].fields.accountType}')">Edit</button>
                     </div>
                 `)
                 $('.accountContainerBody').append(accountSub)
@@ -487,8 +489,8 @@ function loadCategory(){
             for (var i in category) {
                 var categorySub = $(`
                     <div class="categorySub">
-                        <span>${category[i].fields.category}</span>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#categoryModal" onclick="categoryDetail('${category[i].pk}', '${category[i].fields.category}')">Edit</button>
+                        <span>${category[i].fields.categoryName}</span>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".categoryModal" onclick="categoryDetail('${category[i].pk}', '${category[i].fields.categoryName}')">Edit</button>
                     </div>
                 `)
                 $('.categoryContainerBody').append(categorySub)
@@ -585,7 +587,97 @@ function editEntry(entry_id){
                     }
                 }
                 for (var i in category) {
-                    var x = category[i].fields.category
+                    var x = category[i].fields.categoryName
+                    if (x == category) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_category').append(option)
+                    }
+                    else {
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_category').append(option)
+                    }
+                }
+            }
+            if (type == "Income") {
+                $('.editEntryForm').html(`
+                    <input type="hidden" class="edit_entry_pk" value="${pk}">
+                    <input type="hidden" class="edit_entry_to" value="${from_account}">
+                    <label for="edit_entry_amount">Amount</label>
+                    <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                    <label for="edit_entry_to">Account</label>
+                    <select class="form-control edit_entry_to">
+                    </select>
+                    <label for="edit_entry_category">Category</label>
+                    <select class="form-control edit_entry_category">
+                    </select>
+                    <label for="edit_entry_note">Note</label>
+                    <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                `)
+                for (var i in accounts) {
+                    var x = accounts[i].fields.accountName
+                    if (x == to_account) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_to').append(option)
+                    }
+                    else {
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_to').append(option)
+                    }
+                }
+                for (var i in category) {
+                    var x = category[i].fields.categoryName
+                    if (x == category) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_category').append(option)
+                    }
+                    else {
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_category').append(option)
+                    }
+                }
+            }
+            if (type == "Transfer") {
+                $('.editEntryForm').html(`
+                    <input type="hidden" class="edit_entry_pk" value="${pk}">
+                    <label for="edit_entry_amount">Amount</label>
+                    <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                    <label for="edit_entry_from">From</label>
+                    <select class="form-control edit_entry_from">
+                    </select>
+                    <label for="edit_entry_to">To</label>
+                    <select class="form-control edit_entry_to">
+                    </select>
+                    <label for="edit_entry_category">Category</label>
+                    <select class="form-control edit_entry_category">
+                    </select>
+                    <label for="edit_entry_note">Note</label>
+                    <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                `)
+                for (var i in accounts) {
+                    var x = accounts[i].fields.accountName
+                    if (x == to_account) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_to').append(option)
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_from').append(option)
+                    }
+                    if (x == from_account) {
+                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        $('.edit_entry_from').append(option)
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_to').append(option)
+                    }
+                    else {
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_to').append(option)
+                        var option = $(`<option value="${x}">${x}</option>`)
+                        $('.edit_entry_from').append(option)
+                    }
+                }
+                for (var i in category) {
+                    var x = category[i].fields.categoryName
                     if (x == category) {
                         var option = $(`<option value="${x}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
@@ -652,17 +744,17 @@ function deleteEntry(entry_id){
 
 function selectEntry(trans_id){
     $('.editEntryHiddendiv').html(`
-        <input type="hidden" id="entry_id" value="${trans_id}">
+        <input type="hidden" class="entry_id" value="${trans_id}">
     `)
 }
 
 function loadEntry(){
-    filterNote = $('.filterContainer').find('input#filterNote')[0].value
-    filterCategory = $('.filterContainer').find('select#filterCategory')[0].value
-    filterAccount = $('.filterContainer').find('select#filterAccount')[0].value
-    filterType = $('.filterContainer').find('select#filterType')[0].value
-    filterDateStart = $('.filterContainer').find('input#filterDateStart')[0].value
-    filterDateEnd = $('.filterContainer').find('input#filterDateEnd')[0].value
+    filterNote = $('.filterContainer').find('.filterNote')[0].value
+    filterCategory = $('.filterContainer').find('.filterCategory')[0].value
+    filterAccount = $('.filterContainer').find('.filterAccount')[0].value
+    filterType = $('.filterContainer').find('.filterType')[0].value
+    filterDateStart = $('.filterContainer').find('.filterDateStart')[0].value
+    filterDateEnd = $('.filterContainer').find('.filterDateEnd')[0].value
 
     $.ajax({
         type: 'GET',
@@ -687,6 +779,10 @@ function loadEntry(){
             var transaction = JSON.parse(data.transaction)
             var transaction_date = JSON.parse(data.transaction_date)
             var message = data.message
+            console.log(accounts)
+            console.log(category)
+            console.log(transaction)
+
             $('.transactionDiv').html('')
             if (transaction==null||transaction.length==0) {
                 var transactionDivSub =
@@ -707,48 +803,69 @@ function loadEntry(){
                 for (var y in transaction) {
                     if (transaction[y].fields.entryDate == transaction_date[x].fields.entryDate) {
                         if (transaction[y].fields.type == 'Income') {
+                            var to_account_name = lookUpAccount(transaction[y].fields.toAccount, accounts)
+                            var category_name = lookUpCategory(transaction[y].fields.category, category)
                             var transactionDivSubSub =
-                            `<div class="transactionDivSubSub divIncome" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
+                            `<div class="transactionDivSubSub divIncome" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target=".indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Income</span>:
-                                    <span class="transCategory">${transaction[y].fields.category}</span>
-                                    (<span class="transAccount">${transaction[y].fields.toAccount}</span>)
+                                    <span class="transCategory">${category_name}</span>
+                                    (<span class="transAccount">${to_account_name}</span>)
                                     <span class="transNote">${transaction[y].fields.entryNote}</span>
                                 </div>
                                 <div class="transRight">
-                                    <span class="dailyAdd">${transaction[y].fields.amount}</span>
+                                    <span class="dailyAdd">${transaction[y].fields.amount.toFixed(2)}</span>
                                 </div>
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
                         }
                         if (transaction[y].fields.type == 'Expense') {
+                            var from_account_name = lookUpAccount(transaction[y].fields.fromAccount, accounts)
+                            var category_name = lookUpCategory(transaction[y].fields.category, category)
                             var transactionDivSubSub =
-                            `<div class="transactionDivSubSub divExpense" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
+                            `<div class="transactionDivSubSub divExpense" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target=".indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Expense</span>:
-                                    <span class="transCategory">${transaction[y].fields.category}</span>
-                                    (<span class="transAccount">${transaction[y].fields.fromAccount}</span>)
+                                    <span class="transCategory">${category_name}</span>
+                                    (<span class="transAccount">${from_account_name}</span>)
                                     <span class="transNote">${transaction[y].fields.entryNote}</span>
-                                    <span class="transNote">${transaction[y].fields.entryDate}</span>
                                 </div>
                                 <div class="transRight">
-                                    <span class="dailyAdd">${transaction[y].fields.amount}</span>
+                                    <span class="dailyAdd">${transaction[y].fields.amount.toFixed(2)}</span>
                                 </div>
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
                         }
-                        if ((transaction[y].fields.type == 'Transfer') || (transaction[y].fields.type == 'System')) {
+                        if (transaction[y].fields.type == 'Transfer') {
+                            var to_account_name = lookUpAccount(transaction[y].fields.toAccount, accounts)
+                            var from_account_name = lookUpAccount(transaction[y].fields.fromAccount, accounts)
+                            var category_name = lookUpCategory(transaction[y].fields.category, category)
                             var transactionDivSubSub =
-                            `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target="#indexModal" onclick="selectEntry(${transaction[y].pk})">
+                            `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target=".indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Transfer</span>:
-                                    <span class="transCategory">${transaction[y].fields.category}</span> from
-                                    (<span class="transAccount">${transaction[y].fields.fromAccount}</span>) to
-                                    (<span class="transAccount">${transaction[y].fields.toAccount}</span>)
+                                    <span class="transCategory">${category_name}</span> from
+                                    (<span class="transAccount">${from_account_name}</span>) to
+                                    (<span class="transAccount">${to_account_name}</span>)
                                     <span class="transNote">${transaction[y].fields.entryNote}</span>
                                 </div>
                                 <div class="transRight">
-                                    <span class="dailyAdd">${transaction[y].fields.amount}</span>
+                                    <span class="dailyAdd">${transaction[y].fields.amount.toFixed(2)}</span>
+                                </div>
+                            </div>`;
+                            transactionDivSub.append(transactionDivSubSub)
+                        }
+                        if (transaction[y].fields.type == 'System') {
+                            var from_account_name = lookUpAccount(transaction[y].fields.fromAccount, accounts)
+                            var transactionDivSubSub =
+                            `<div class="transactionDivSubSub divSystem" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target=".indexModal" onclick="selectEntry(${transaction[y].pk})">
+                                <div class="transLeft">
+                                    <span class="transType">System</span>:
+                                    (<span class="transAccount">${from_account_name}</span>)
+                                    <span class="transNote">${transaction[y].fields.entryNote}</span>
+                                </div>
+                                <div class="transRight">
+                                    <span class="dailyAdd">${transaction[y].fields.amount.toFixed(2)}</span>
                                 </div>
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
@@ -805,12 +922,12 @@ function getDailyChange(){ //sum up total for the day
         var total=0;
         $(this).find(".transactionDivSubSub").each(function(){
             if ($(this).is(':visible')&&$(this).find('.transType').text()!="Transfer") {
-                total+=parseInt($(this)[0].children[1].children[0].innerHTML)
+                total+=parseFloat($(this)[0].children[1].children[0].innerHTML)
             }
             else {
             }
         })
-        $(this).find('.dailyTotal').html("$"+total)
+        $(this).find('.dailyTotal').html("$"+total.toFixed(2))
     })
 }
 
@@ -819,15 +936,41 @@ function hideModal(){
     $('.modal').hide()
     $('.modal-backdrop').hide()
     $('.editEntryForm').hide()
+    closeTab()
 }
 
 function openTab(env, tab_name){
     $('.tabContent').removeClass('selectedTab')
     $('.tabContent').hide()
-    $('#'+tab_name).addClass('selectedTab')
-    $('#'+tab_name).show()
+    $('.'+tab_name).addClass('selectedTab')
+    $('.'+tab_name).show()
+    if (tab_name == 'incomeForm') {
+        $('.new_entry_type').val('Income')
+    }
+    if (tab_name == 'expenseForm') {
+        $('.new_entry_type').val('Expense')
+    }
+    if (tab_name == 'transferForm') {
+        $('.new_entry_type').val('Transfer')
+    }
 }
 
 function closeTab(){
     $('.tabContent').hide()
+    $('.tabContent :input').val('')
+}
+
+function lookUpAccount(pk, account){
+    for (var i in account) {
+        if (account[i].pk == pk) {
+            return(account[i].fields.accountName)
+        }
+    }
+}
+function lookUpCategory(pk, category){
+    for (var i in category) {
+        if (category[i].pk == pk) {
+            return(category[i].fields.categoryName)
+        }
+    }
 }

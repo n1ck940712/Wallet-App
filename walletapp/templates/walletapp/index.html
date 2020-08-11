@@ -5,40 +5,40 @@
 
 <!-- filter container -->
 <div class="topContainer">
+    {% csrf_token %}
     <div class="filterContainer" style="display:flex">
         <!-- filter form -->
-        <form class="form-group col-10" action="{% url 'index' %}" method="post" style="display:flex;">
-            {% csrf_token %}
-            <input type="text" class="col-2 form-control" id="filterNote" name="filterNote" placeholder="Filter Note" autocomplete="off">
-            <select class="form-control" id="filterCategory" name="filterCategory">
+        <form class="form-group col-10" style="display:flex;">
+            <input type="text" class="filterNote col-2 form-control" placeholder="Filter Note" autocomplete="off">
+            <select class="filterCategory form-control">
                 <option value="" selected>All Category</option>
                 {% for item in category %}
-                <option value="{{item.category}}">{{item.category}}</option>
+                <option value="{{item.pk}}">{{item.categoryName}}</option>
                 {% endfor %}
             </select>
-            <select class="form-control" id="filterAccount" name="filterAccount">
+            <select class="filterAccount form-control">
                 <option value="" selected>All Accounts</option>
                 {% for item in accounts %}
-                <option value="{{item.accountName}}">{{item.accountName}}</option>
+                <option value="{{item.pk}}">{{item.accountName}}</option>
                 {% endfor %}
             </select>
-            <select class="form-control" id="filterType" name="filterType">
+            <select class="filterType form-control">
                 <option value="" selected>All Transaction</option>
                 <option value="Expense">Expense</option>
                 <option value="Income">Income</option>
                 <option value="Transfer">Transfer</option>
             </select>
-            <input type="text" class="form-control col-3" name="filterDate" id="filterDate">
-            <input type="hidden" name="filterDateStart" id="filterDateStart">
-            <input type="hidden" name="filterDateEnd" id="filterDateEnd">
-            <button type="button" class="btn btn-primary btn-md form-control" id="filterButton">Filter</button>
+            <input type="text" class="filterDate form-control col-3">
+            <input type="hidden" class="filterDateStart">
+            <input type="hidden" class="filterDateEnd">
+            <button type="button" class="filterButton btn btn-primary btn-md form-control">Filter</button>
         </form>
-        <button class="btn btn-success btn-block form-control" data-toggle="modal" data-target="#addEntryModal" id="addEntryButton">New Transaction</button>
+        <button class="addEntryButton btn btn-success btn-block form-control" data-toggle="modal" data-target=".addEntryModal">New Transaction</button>
     </div>
 
     <!-- clearfilter -->
     <div class="clearFilter text-center">
-        <button class="btn btn-secondary btn-sm" id="clearFilterButton">Clear Filter</button>
+        <button class="clearFilterButton btn btn-secondary btn-sm">Clear Filter</button>
     </div>
 </div>
 
@@ -58,12 +58,12 @@
 
 <!-- modal -->
 <!-- edit/delete entry modal -->
-<div class="modal fade" id="indexModal" tabindex="-1" role="dialog" aria-labelledby="indexModalLabel" aria-hidden="true">
+<div class="modal fade indexModal" tabindex="-1" role="dialog" aria-labelledby="indexModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content text-center">
             <div class="modal-header">
-                <h5 class="modal-title" id="indexModalLabel">Entry Details</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                <h5 class="modal-title indexModalLabel">Entry Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeTab()">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -80,74 +80,66 @@
 </div>
 
 <!-- add entry modal -->
-<div class="modal fade" id="addEntryModal" tabindex="-1" role="dialog" aria-labelledby="addEntryModalLabel" aria-hidden="true">
+<div class="modal fade addEntryModal" tabindex="-1" role="dialog" aria-labelledby="addEntryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addEntryModalLabel">Add Entry</h5>
+                <h5 class="modal-title addEntryModalLabel">Add Entry</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeTab()">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <div id="addingTransaction" style="text-align:center;display:none;">
-                    {% load static %}
-                    <p><img src="{% static 'walletapp/images/loading.gif' %}" /> Please Wait</p>
-                </div>
                 <div class="tabDiv text-center">
                     <button class="tabButton btn btn-success btn-md" onclick="openTab(event, 'incomeForm')">Income</button>
                     <button class="tabButton btn btn-danger btn-md" onclick="openTab(event, 'expenseForm')">Expense</button>
                     <button class="tabButton btn btn-primary btn-md" onclick="openTab(event, 'transferForm')">Transfer</button>
                 </div>
-                <div class="tabContent" id="incomeForm">
-                    <form class="form-group text-center" action="addEntry" method="post">
-                        <span id="csrfToken">{% csrf_token %}</span>
-                        <input type="hidden" class="new_entry_from" name="new_entry_from" value="Null">
-                        <input type="hidden" class="new_entry_type" name="new_entry_type" value="Income">
-                        <input type="text" class="form-control new_entry_amount" name="new_entry_amount" placeholder="Amount" autocomplete="off" required>
-                        <select class="form-control new_entry_to" name="new_entry_to" required>
+                <div class="tabContent incomeForm">
+                    <form class="form-group text-center">
+                        <!-- <input type="hidden" class="new_entry_from" name="new_entry_from" value="Null"> -->
+                        <input type="hidden" class="new_entry_type">
+                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
+                        <select class="form-control new_entry_to" required>
                             <option value="" selected disabled>Account</option>
                             {% for item in accounts %}
                             <option value="{{item.accountName}}">{{item.accountName}}</option>
                             {% endfor %}
                         </select>
-                        <select class="form-control new_entry_category" name="new_entry_category" required>
+                        <select class="form-control new_entry_category" required>
                             <option value="" selected disabled>Category</option>
                             {% for item in category %}
-                            <option value="{{item.category}}">{{item.category}}</option>
+                            <option value="{{item.pk}}">{{item.categoryName}}</option>
                             {% endfor %}
                         </select>
-                        <input class="form-control new_entry_date" type="date" name="new_entry_date" required>
-                        <input type="text" class="form-control new_entry_note" name="new_entry_note" placeholder="Note" autocomplete="off">
+                        <input type="date" class="form-control new_entry_date" required>
+                        <input type="text" class="form-control new_entry_note" placeholder="Note" autocomplete="off">
                         <button type="button" class="btn btn-primary submitNewEntry">Add</button>
                     </form>
                 </div>
-                <div class="tabContent" id="expenseForm">
-                    <form class="form-group text-center" action="addEntry" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" class="new_entry_to" name="new_entry_to" value="Null">
-                        <input type="hidden" class="new_entry_type" name="new_entry_type" value="Expense">
-                        <input type="text" class="form-control new_entry_amount" name="new_entry_amount" placeholder="Amount" autocomplete="off">
-                        <select class="form-control new_entry_from" name="new_entry_from">
+                <div class="tabContent expenseForm">
+                    <form class="form-group text-center">
+                        <input type="hidden" class="new_entry_type">
+                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off">
+                        <select class="form-control new_entry_from">
                             <option value="" selected disabled>Account</option>
                             {% for item in accounts %}
                             <option value="{{item.accountName}}">{{item.accountName}}</option>
                             {% endfor %}
                         </select>
-                        <select class="form-control new_entry_category" name="new_entry_category">
+                        <select class="form-control new_entry_category">
                             <option value="" selected disabled>Category</option>
                             {% for item in category %}
-                            <option value="{{item.category}}">{{item.category}}</option>
+                            <option value="{{item.pk}}">{{item.categoryName}}</option>
                             {% endfor %}
                         </select>
-                        <input type="date" class="form-control new_entry_date" name="new_entry_date">
-                        <input type="text" class="form-control new_entry_note" name="new_entry_note" placeholder="Note" autocomplete="off">
+                        <input type="date" class="form-control new_entry_date" required>
+                        <input type="text" class="form-control new_entry_note" placeholder="Note" autocomplete="off">
                         <button type="button" class="btn btn-primary submitNewEntry">Add</button>
                     </form>
                 </div>
-                <div class="tabContent" id="transferForm">
+                <div class="tabContent transferForm">
                     <form class="form-group text-center" action="addEntry" method="post">
-                        {% csrf_token %}
                         <input type="hidden" class="new_entry_category" name="new_entry_category" value="Expense">
                         <input type="hidden" class="new_entry_type" name="new_entry_type" value="Transfer">
                         <input type="text" class="form-control new_entry_amount" name="new_entry_amount" placeholder="Amount" autocomplete="off">

@@ -22,7 +22,7 @@ def index(request):
     context = {
     'user': request.user,
     'accounts': dbAccount.objects.all().order_by('accountName'),
-    'category': dbCategory.objects.all().order_by('category'),
+    'category': dbCategory.objects.all().order_by('categoryName'),
     'transactions': dbEntry.objects.all()
     }
     return render(request, "walletapp/index.html", context)
@@ -30,7 +30,7 @@ def index(request):
 def settingPage(request):
     context = {
     "user": request.user,
-    "category": dbCategory.objects.all().order_by("category"),
+    "category": dbCategory.objects.all().order_by("categoryName"),
     "transaction": dbEntry.objects.all().reverse(),
     "accounts": dbAccount.objects.all().order_by("accountName"),
     "accountTypes": dbAccount.objects.distinct('accountType').order_by('accountType'),
@@ -55,46 +55,69 @@ def getAccountOverview(request): # overview graph
     filter_date_end_plus1 = request.GET.get('filter_date_end+1')
 
     if (filter_date_start and filter_date_end) == '' : #no date filter
-        print('no date filter')
+        print('nodatefilter')
         filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).order_by('-entryDate')
         filtered_expense_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Expense").values('category').annotate(total=Sum('amount'))
         filtered_income_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Income").values('category').annotate(total=Sum('amount'))
-        balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('entryDate').annotate(total=Sum('amount'))
+        balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('entryDate').annotate(total=Sum('amount')).order_by('entryDate')
         selected_account_balance = dbAccount.objects.get(accountName=selected_account).accountBalance
-
     elif (filter_date_end != filter_date_start): #yes date filter
-        print('yes date filter')
         filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).order_by('-entryDate')
         filtered_expense_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).filter(type="Expense").values('category').annotate(total=Sum('amount'))
         filtered_income_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).filter(type="Income").values('category').annotate(total=Sum('amount'))
-        balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).values('entryDate').annotate(total=Sum('amount'))
+        balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).values('entryDate').annotate(total=Sum('amount')).order_by('entryDate')
 
-        last_entry_date = dbEntry.objects.all().order_by('entryDate').last().entryDate
+        last_entry_date = dbEntry.objects.all().order_by('entryDate').last().entryDate ##get balance at filter end date
         get_balance_at_date = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_end_plus1, last_entry_date]).order_by('-entryDate')
         selected_account_balance = float(dbAccount.objects.get(accountName=selected_account).accountBalance)
         print(get_balance_at_date)
         for item in get_balance_at_date:
-            selected_account_balance -= float(item.amount)
+            if (item.type == 'Transfer') and (item.fromAccount == selected_account):
+                selected_account_balance += float(item.amount)
+            elif (item.type == 'Transfer') and (item.toAccount == selected_account):
+                selected_account_balance -= float(item.amount)
+            else:
+                selected_account_balance -= float(item.amount)
+
 
     total_change = float(0) ####total change calculation
     total_income = float(0)
     total_expense = float(0)
     total_transfer = float(0)
+    daily_change_dict = []
+    daily_change = {}
+    first_run_flag=True
     for item in filtered_transaction:
+        if first_run_flag==True:
+            test_date = item.entryDate
+            daily_total = float(0)
+        if item.entryDate != test_date:
+            daily_total = float(0)
         if item.type == "Income":
             total_change += float(item.amount)
             total_income += float(item.amount)
+            daily_total += float(item.amount)
         if item.type == "Expense":
             total_change += float(item.amount)
             total_expense += float(item.amount)
+            daily_total += float(item.amount)
         if item.type == "Transfer":
             total_transfer += float(item.amount)
-
+            if item.fromAccount == selected_account:
+                daily_total -= float(item.amount)
+            if item.toAccount == selected_account:
+                daily_total += float(item.amount)
+        if item.type == "System":
+            print('systemtest')
+            daily_total += float(item.amount)
+        daily_change[str(item.entryDate)] = daily_total
+        test_date = item.entryDate
+        first_run_flag=False
     data = {
-    "transaction": serializers.serialize("json", filtered_transaction),
+    'daily_change': daily_change,
     "expense_category": list(filtered_expense_category),
     "income_category": list(filtered_income_category),
-    "balance_history": list(balance_history),
+    # "balance_history": list(balance_history),
     "total_change": total_change,
     "total_income": total_income,
     "total_expense": total_expense,
@@ -141,7 +164,7 @@ def editEntry(request):
     context = {
     # "user": request.user,
     "chosen_entry": serializers.serialize('json', dbEntry.objects.filter(pk=request.GET.get('entry_id'))),
-    "category": serializers.serialize('json', dbCategory.objects.all().order_by("category")),
+    "category": serializers.serialize('json', dbCategory.objects.all().order_by("categoryName")),
     "accounts": serializers.serialize('json', dbAccount.objects.all().order_by("accountName")),
     }
     return JsonResponse(context)
@@ -272,10 +295,10 @@ def loadEntry(request):
         transaction_result = dbEntry.objects.filter(type=filter_type)
         filter_flag = True
     if filter_category != "" and filter_flag == True:
-        transaction_result = transaction_result.filter(category=filter_category)
+        transaction_result = transaction_result.filter(categoryName=filter_category)
         filter_flag = True
     elif filter_category !="":
-        transaction_result = dbEntry.objects.filter(category=filter_category)
+        transaction_result = dbEntry.objects.filter(categoryName=filter_category)
         filter_flag = True
     if filter_note != "" and filter_flag == True:
         transaction_result = transaction_result.filter(entryNote=filter_note)
@@ -307,7 +330,7 @@ def loadEntry(request):
         transaction_result = dbEntry.objects.all()
     data = {
     # "user": list(request.user),
-    "category": serializers.serialize('json', dbCategory.objects.all().order_by("category")),
+    "category": serializers.serialize('json', dbCategory.objects.all().order_by("categoryName")),
     "transaction": serializers.serialize('json', transaction_result.order_by('-entryDate')),
     "transaction_date": serializers.serialize('json', transaction_result.order_by('-entryDate').distinct('entryDate')),
     "accounts": serializers.serialize('json', dbAccount.objects.all().order_by("accountName")),
