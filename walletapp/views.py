@@ -49,7 +49,7 @@ def overview(request):
 
 def getAccountOverview(request): # overview graph
 
-    selected_account = request.GET.get('selected_account')
+    selected_account = int(request.GET.get('selected_account'))
     filter_date_start = request.GET.get('filter_date_start')
     filter_date_end = request.GET.get('filter_date_end')
     filter_date_end_plus1 = request.GET.get('filter_date_end+1')
@@ -60,7 +60,7 @@ def getAccountOverview(request): # overview graph
         filtered_expense_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Expense").values('category').annotate(total=Sum('amount'))
         filtered_income_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(type="Income").values('category').annotate(total=Sum('amount'))
         balance_history = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).values('entryDate').annotate(total=Sum('amount')).order_by('entryDate')
-        selected_account_balance = dbAccount.objects.get(accountName=selected_account).accountBalance
+        selected_account_balance = dbAccount.objects.get(pk=selected_account).accountBalance
     elif (filter_date_end != filter_date_start): #yes date filter
         filtered_transaction = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).order_by('-entryDate')
         filtered_expense_category = (dbEntry.objects.filter(toAccount=selected_account) | dbEntry.objects.filter(fromAccount=selected_account)).filter(entryDate__range=[filter_date_start, filter_date_end]).filter(type="Expense").values('category').annotate(total=Sum('amount'))
@@ -102,18 +102,21 @@ def getAccountOverview(request): # overview graph
             total_expense += float(item.amount)
             daily_total += float(item.amount)
         if item.type == "Transfer":
+            print('transfer')
             total_transfer += float(item.amount)
-            if item.fromAccount == selected_account:
+            if item.fromAccount.pk == selected_account:
+                print('minus')
                 daily_total -= float(item.amount)
-            if item.toAccount == selected_account:
+            if item.toAccount.pk == selected_account:
+                print('plus')
                 daily_total += float(item.amount)
         if item.type == "System":
-            print('systemtest')
             daily_total += float(item.amount)
         daily_change[str(item.entryDate)] = daily_total
         test_date = item.entryDate
         first_run_flag=False
     data = {
+    'category': serializers.serialize('json', dbCategory.objects.all().order_by('categoryName')),
     'daily_change': daily_change,
     "expense_category": list(filtered_expense_category),
     "income_category": list(filtered_income_category),
@@ -172,11 +175,11 @@ def editEntry(request):
 def editEntryConfirm(request):
     if request.method == "POST":
         old_entry = dbEntry.objects.get(pk=request.POST['edit_entry_pk'])
-        edit_entry_to = request.POST.get('edit_entry_to')
-        edit_entry_from = request.POST.get('edit_entry_from')
+        edit_entry_to = int(request.POST.get('edit_entry_to'))
+        edit_entry_from = int(request.POST.get('edit_entry_from'))
         edit_entry_note= request.POST.get('edit_entry_note')
         edit_entry_amount = request.POST.get('edit_entry_amount')
-        edit_entry_category = request.POST.get('edit_entry_category')
+        edit_entry_category = int(request.POST.get('edit_entry_category'))
         entry_change_flag = False
         if old_entry.amount != float(edit_entry_amount):
             entry_change_flag = True
@@ -200,49 +203,51 @@ def editEntryConfirm(request):
                 get_account_from.save()
                 get_account_to.save()
             old_entry.amount = edit_entry_amount
-        if old_entry.category != edit_entry_category:
+        if old_entry.category.pk != edit_entry_category:
             entry_change_flag = True
             print("category change")
-            old_entry.category = edit_entry_category
-        if old_entry.fromAccount != edit_entry_from:
-            entry_change_flag = True
-            print("from account change")
-            if old_entry.type == "Expense":
-                get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
-                get_account_new = dbAccount.objects.get(accountName=edit_entry_from)
-                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) + float(edit_entry_amount))
-                get_account_new.accountBalance = str(float(get_account_new.accountBalance) - float(edit_entry_amount))
-                get_account_ori.save()
-                get_account_new.save()
-            old_entry.fromAccount = edit_entry_from
-            if old_entry.type == "Transfer":
-                get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
-                get_account_new = dbAccount.objects.get(accountName=edit_entry_from)
-                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) + float(edit_entry_amount))
-                get_account_new.accountBalance = str(float(get_account_new.accountBalance) - float(edit_entry_amount))
-                get_account_ori.save()
-                get_account_new.save()
-            old_entry.fromAccount = edit_entry_from
-        if old_entry.toAccount != edit_entry_to:
-            entry_change_flag = True
-            print(old_entry.toAccount)
-            print(edit_entry_to)
-            print("to account change")
-            if old_entry.type == "Income":
-                get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
-                get_account_new = dbAccount.objects.get(accountName=edit_entry_to)
-                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) - float(edit_entry_amount))
-                get_account_new.accountBalance = str(float(get_account_new.accountBalance) + float(edit_entry_amount))
-                get_account_ori.save()
-                get_account_new.save()
-            if old_entry.type == "Transfer":
-                get_account_ori = dbAccount.objects.get(accountName=old_entry.toAccount)
-                get_account_new = dbAccount.objects.get(accountName=edit_entry_to)
-                get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) - float(edit_entry_amount))
-                get_account_new.accountBalance = str(float(get_account_new.accountBalance) + float(edit_entry_amount))
-                get_account_ori.save()
-                get_account_new.save()
-            old_entry.toAccount = edit_entry_to
+            old_entry.category = dbCategory.objects.get(pk=edit_entry_category)
+        if edit_entry_from != 0:
+            if old_entry.fromAccount.pk != edit_entry_from:
+                entry_change_flag = True
+                print("from account change")
+                if old_entry.type == "Expense":
+                    get_account_ori = dbAccount.objects.get(pk=old_entry.fromAccount.pk)
+                    get_account_new = dbAccount.objects.get(pk=edit_entry_from)
+                    get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) + float(edit_entry_amount))
+                    get_account_new.accountBalance = str(float(get_account_new.accountBalance) - float(edit_entry_amount))
+                    get_account_ori.save()
+                    get_account_new.save()
+                old_entry.fromAccount = edit_entry_from
+                if old_entry.type == "Transfer":
+                    get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                    get_account_new = dbAccount.objects.get(accountName=edit_entry_from)
+                    get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) + float(edit_entry_amount))
+                    get_account_new.accountBalance = str(float(get_account_new.accountBalance) - float(edit_entry_amount))
+                    get_account_ori.save()
+                    get_account_new.save()
+                old_entry.fromAccount = edit_entry_from
+        if edit_entry_to != 0:
+            if old_entry.toAccount.pk != edit_entry_to:
+                entry_change_flag = True
+                print(old_entry.toAccount)
+                print(edit_entry_to)
+                print("to account change")
+                if old_entry.type == "Income":
+                    get_account_ori = dbAccount.objects.get(accountName=old_entry.fromAccount)
+                    get_account_new = dbAccount.objects.get(accountName=edit_entry_to)
+                    get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) - float(edit_entry_amount))
+                    get_account_new.accountBalance = str(float(get_account_new.accountBalance) + float(edit_entry_amount))
+                    get_account_ori.save()
+                    get_account_new.save()
+                if old_entry.type == "Transfer":
+                    get_account_ori = dbAccount.objects.get(accountName=old_entry.toAccount)
+                    get_account_new = dbAccount.objects.get(accountName=edit_entry_to)
+                    get_account_ori.accountBalance = str(float(get_account_ori.accountBalance) - float(edit_entry_amount))
+                    get_account_new.accountBalance = str(float(get_account_new.accountBalance) + float(edit_entry_amount))
+                    get_account_ori.save()
+                    get_account_new.save()
+                old_entry.toAccount = edit_entry_to
         if old_entry.entryNote != edit_entry_note:
             entry_change_flag = True
             print("note change")
@@ -295,10 +300,10 @@ def loadEntry(request):
         transaction_result = dbEntry.objects.filter(type=filter_type)
         filter_flag = True
     if filter_category != "" and filter_flag == True:
-        transaction_result = transaction_result.filter(categoryName=filter_category)
+        transaction_result = transaction_result.filter(category=filter_category)
         filter_flag = True
     elif filter_category !="":
-        transaction_result = dbEntry.objects.filter(categoryName=filter_category)
+        transaction_result = dbEntry.objects.filter(category=filter_category)
         filter_flag = True
     if filter_note != "" and filter_flag == True:
         transaction_result = transaction_result.filter(entryNote=filter_note)

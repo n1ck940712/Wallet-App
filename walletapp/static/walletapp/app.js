@@ -211,8 +211,6 @@ function loadOverview(){
 function getAccountOverview(){
     var filter_start_date = $('.filterDateStart').val()
     var filter_end_date = $('.filterDateEnd').val()
-    console.log(filter_start_date)
-    console.log(filter_end_date)
     var filter_end_date_plus1 = new Date(filter_end_date)
     filter_end_date_plus1.setDate(filter_end_date_plus1.getDate()+1)
     $.ajax({
@@ -232,6 +230,7 @@ function getAccountOverview(){
         },
         success: function(data) {
             console.log(data)
+            var category = JSON.parse(data.category)
             var expense_category = data.expense_category
             var income_category = data.income_category
             var daily_change = data.daily_change
@@ -271,7 +270,6 @@ function getAccountOverview(){
                         date1.setDate(date1.getDate()-1)
                         balanceChart.data.labels.push(convertDate(date1))
                         balanceChart.data.datasets[0].data.push(latest_balance)
-
                     }
                 }
             };
@@ -283,14 +281,14 @@ function getAccountOverview(){
 
             //update expense chart
             for (var item in expense_category) {
-                expenseChart.data.labels.push(expense_category[item].category);
+                expenseChart.data.labels.push(lookUpCategory(expense_category[item].category, category));
                 expenseChart.data.datasets[0].data.push(Math.abs(expense_category[item].total));
             }
             expenseChart.update();
 
             //update income chart
             for (var item in income_category) {
-                incomeChart.data.labels.push(income_category[item].category);
+                incomeChart.data.labels.push(lookUpCategory(expense_category[item].category, category));
                 incomeChart.data.datasets[0].data.push(Math.abs(income_category[item].total));
             }
             incomeChart.update();
@@ -554,6 +552,7 @@ function editEntry(entry_id){
             var chosen_entry = JSON.parse(data.chosen_entry)
             var pk = chosen_entry[0].pk
             var amount = chosen_entry[0].fields.amount
+            var entry_category = lookUpCategory(chosen_entry[0].fields.category, category)
             var entry_date = chosen_entry[0].fields.entryDate
             var entry_note = chosen_entry[0].fields.entryNote
             var from_account = chosen_entry[0].fields.fromAccount
@@ -562,38 +561,40 @@ function editEntry(entry_id){
             if (type == "Expense") {
                 $('.editEntryForm').html(`
                     <input type="hidden" class="edit_entry_pk" value="${pk}">
-                    <input type="hidden" class="edit_entry_to" value="${to_account}">
+                    <input type="hidden" class="edit_entry_to" value="0">
+                    <div style='display:flex;'>
                     <label for="edit_entry_amount">Amount</label>
-                    <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                    <input class="form-control edit_entry_amount" type="text" value="${amount}"></div>
+                    <div style='display:flex;'>
                     <label for="edit_entry_from">Account</label>
-                    <select class="form-control edit_entry_from">
-                    </select>
+                    <select class="form-control edit_entry_from"></select></div>
+                    <div style='display:flex;'>
                     <label for="edit_entry_category">Category</label>
-                    <select class="form-control edit_entry_category">
-                    </select>
+                    <select class="form-control edit_entry_category"></select></div>
+                    <div style='display:flex;'>
                     <label for="edit_entry_note">Note</label>
-                    <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                    <input class="form-control edit_entry_note" type="text" value="${entry_note}"></div>
                     <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
                 `)
                 for (var i in accounts) {
                     var x = accounts[i].fields.accountName
                     if (x == from_account) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                     else {
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                 }
                 for (var i in category) {
                     var x = category[i].fields.categoryName
-                    if (x == category) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                    if (x == entry_category) {
+                        var option = $(`<option value="${category[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                     else {
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${category[i].pk}">${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                 }
@@ -601,7 +602,7 @@ function editEntry(entry_id){
             if (type == "Income") {
                 $('.editEntryForm').html(`
                     <input type="hidden" class="edit_entry_pk" value="${pk}">
-                    <input type="hidden" class="edit_entry_to" value="${from_account}">
+                    <input type="hidden" class="edit_entry_from" value="0">
                     <label for="edit_entry_amount">Amount</label>
                     <input class="form-control edit_entry_amount" type="text" value="${amount}">
                     <label for="edit_entry_to">Account</label>
@@ -617,22 +618,22 @@ function editEntry(entry_id){
                 for (var i in accounts) {
                     var x = accounts[i].fields.accountName
                     if (x == to_account) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_to').append(option)
                     }
                     else {
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_to').append(option)
                     }
                 }
                 for (var i in category) {
                     var x = category[i].fields.categoryName
-                    if (x == category) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                    if (x == entry_category) {
+                        var option = $(`<option value="${category[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                     else {
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${category[i].pk}">${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                 }
@@ -658,32 +659,32 @@ function editEntry(entry_id){
                 for (var i in accounts) {
                     var x = accounts[i].fields.accountName
                     if (x == to_account) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_to').append(option)
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                     if (x == from_account) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_from').append(option)
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_to').append(option)
                     }
                     else {
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_to').append(option)
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                 }
                 for (var i in category) {
                     var x = category[i].fields.categoryName
-                    if (x == category) {
-                        var option = $(`<option value="${x}" selected>${x}</option>`)
+                    if (x == entry_category) {
+                        var option = $(`<option value="${category[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                     else {
-                        var option = $(`<option value="${x}">${x}</option>`)
+                        var option = $(`<option value="${category[i].pk}">${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                 }
