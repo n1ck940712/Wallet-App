@@ -10,45 +10,34 @@
         <p>Please Wait</p>
     </div>
 </div>
-
-<hr>
-<div class="categoryContainer col-md-5">
-    <div class="categoryContainerHeader">
-        <h5>Category</h5>
-        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addCategoryModal" name="button">Add</button>
-    </div>
-    <div class="categoryContainerBody">
-        {% for item in category %}
-        <div class="categorySub">
-            <div>{{item.category}}</div>
-            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".categoryModal" onclick="categoryDetail('{{item.id}}', '{{item.category}}')">Edit</button>
+<div class="container-fluid" style="display:flex">
+    <div class="accountContainer col-md-5">
+        <div class="accountContainerHeader">
+            <h5>Account</h5>
+            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addAccountModal" name="button">Add</button>
         </div>
-        {% endfor %}
+        <hr>
+        <div class="accountContainerBody"></div>
+    </div>
+    <div class="categoryContainer col-md-5">
+        <div class="categoryContainerHeader">
+            <h5>Category</h5>
+            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addCategoryModal" name="button">Add</button>
+        </div>
+        <hr>
+        <h6>Income</h6>
+        <div class="categoryContainerBody categoryIncome"></div>
+        <h6>Expense</h6>
+        <div class="categoryContainerBody categoryExpense"></div>
     </div>
 </div>
-<hr>
-<div class="accountContainer col-md-5">
-    <div class="accountContainerHeader">
-        <h5>Accounts</h5>
-        <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addAccountModal" name="button">Add</button>
-    </div>
-    <div class="accountContainerBody">
-        {% for item in accounts %}
-        <div class="accountSub">
-            <div>{{item}}</div>
-            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".accountModal" onclick="accountDetail('{{item.id}}', '{{item.accountName}}', '{{item.accountBalance}}', '{{item.accountType}}')">Edit</button>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-<hr>
 
 <!-- add category/ -->
 <div class="modal fade addCategoryModal" tabindex="-1" role="dialog" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title addCategoryModalLabel">Category</h5>
+                <h5 class="modal-title addCategoryModalLabel">New Category</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -57,8 +46,12 @@
                 <form action="addCategory" method="post">
                     {% csrf_token %}
                     <div class="inviForm"></div>
-                    <label for="add_category_input">New category</label>
-                    <input type="text" class="form-control add_category_input" name="add_category_input">
+                    <input type="text" class="form-control add_category_name" placeholder="Name">
+                    <select class="add_category_type form-control">
+                        <option value="" selected disabled>Category Type</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
                     <button type="button" class="btn btn-primary addNewCategory">Add</button>
                 </form>
             </div>

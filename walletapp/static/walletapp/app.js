@@ -60,10 +60,11 @@ $(document).ready(function (){
 
     $('.entryEditButton').click(function(){ //edit entry
         editEntry($('.entry_id').val())
-        $('.editEntryForm').show()
     })
 
 // setting page
+
+    if (window.location.pathname=='/settings') {loadSettings()}
     $('.addNewCategory').click(function(){ //add new category
         addCategory()
     })
@@ -90,6 +91,7 @@ $(document).ready(function (){
 
 // overview page
     if (window.location.pathname=='/overview') {
+        $('.overviewContainer').children(':first').addClass('selectedAccount').removeClass('notSelectedAccount')//select first account
         loadOverview()
         var color = Chart.helpers.color;
         var expenseChartCanvas = document.getElementById('expenseChart').getContext('2d'); // init expense chart
@@ -99,7 +101,7 @@ $(document).ready(function (){
                 labels: [],
                 datasets: [{
                     data: [],
-                    label: 'Expense',
+                    label: 'expense',
                     backgroundColor: [
 						window.chartColors.red,
 						window.chartColors.orange,
@@ -126,11 +128,11 @@ $(document).ready(function (){
                     data: [],
                     label: 'Income',
                     backgroundColor: [
+                        window.chartColors.green,
+                        window.chartColors.blue,
+                        window.chartColors.yellow,
+                        window.chartColors.orange,
 						window.chartColors.red,
-						window.chartColors.orange,
-						window.chartColors.yellow,
-						window.chartColors.green,
-						window.chartColors.blue,
 					],
                 }],
             },
@@ -204,7 +206,7 @@ $(document).ready(function (){
 //////////////////////////////////////////////////////////////////////////////////////
 
 function loadOverview(){
-    $('.overviewContainer').children(':first').addClass('selectedAccount').removeClass('notSelectedAccount')
+
     getAccountOverview()
 }
 
@@ -250,12 +252,20 @@ function getAccountOverview(){
             var array_last_item = keys.length-1
 
             balanceChart.data.datasets[0].data.push(latest_balance) //plot first data point
-            if ((keys[0] != filter_end_date) && filter_end_date !='') {
-                console.log('last day not included')
-                console.log(keys[0])
-                console.log($('.filterdateEnd').val())
-                balanceChart.data.labels.push($('.filterdateEnd').val())
-                balanceChart.data.datasets[0].data.push(latest_balance)
+            var today_date = convertDate(new Date())
+            if (filter_end_date !='') {
+                if (filter_end_date > today_date) {
+                    filter_end_date = today_date
+                    if (keys[0] != filter_end_date) {
+                        balanceChart.data.labels.push(filter_end_date)
+                        balanceChart.data.datasets[0].data.push(latest_balance)
+                    }
+                }
+            } else {
+                if (keys[0] != today_date) {
+                    balanceChart.data.labels.push(today_date)
+                    balanceChart.data.datasets[0].data.push(latest_balance)
+                }
             }
             for(var keys = Object.keys(daily_change), i = 0, end = keys.length; i < end; i++) {
                 var key = keys[i], value = daily_change[key];
@@ -314,7 +324,7 @@ function addAccount(){
         },
         success: function(data){
             hideModal()
-            loadAccount()
+            loadSettings()
             console.log(data)
         }
     })
@@ -338,7 +348,7 @@ function editAccount(){
         },
         success: function(data){
             hideModal()
-            loadAccount()
+            loadSettings()
             console.log(data)
         }
     })
@@ -359,7 +369,7 @@ function deleteAccount(){
         },
         success: function(data){
             hideModal()
-            loadAccount()
+            loadSettings()
             console.log(data)
         }
     })
@@ -374,54 +384,41 @@ function accountDetail(account_id, account_name, account_balance, account_type){
     `)
 }
 
-function loadAccount(){
-    $.ajax({
-        type: 'GET',
-        url: 'loadAccount',
-        data: 'data',
-        beforeSend: function(){
-            $('.loadingAnim').show()
-        },
-        complete: function(){
-            $('.loadingAnim').hide()
-        },
-        success: function(data){
-            var account = JSON.parse(data.account)
-            $('.accountContainerBody').html('')
-            for (var i in account) {
-                var accountSub = $(`
-                    <div class="accountSub">
-                        <span>${account[i].fields.accountName} (${account[i].fields.accountType}) - Balance: ${account[i].fields.accountBalance}</span>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".accountModal" onclick="accountDetail('${account[i].pk}', '${account[i].fields.accountName}', '${account[i].fields.accountBalance}', '${account[i].fields.accountType}')">Edit</button>
-                    </div>
-                `)
-                $('.accountContainerBody').append(accountSub)
-            }
-        }
-    })
-}
-
 // category
 function addCategory(){
-    $.ajax({
-        type: 'POST',
-        url: 'addCategory',
-        headers: {
-            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
-        },
-        data: {
-            'new_category_name': $('.add_category_input').val()
-        },
-        beforeSend: function(){
-            $('.loadingAnim').show()
-        },
-        success: function(data){
-            hideModal()
-            loadCategory()
-            console.log(data)
-        },
+    var add_category_name = $('.add_category_name').val()
+    var add_category_type = $('.add_category_type').val()
+    if (!/\S/.test(add_category_name) || add_category_name.charAt(0)==' ') {
+        console.log('Invalid category name. Try again.')
+        $('.add_category_name').val('')
+        $('.add_category_type').val('')
+    }
+    else if (!add_category_type) {
+        console.log('Choose a category type.')
+    }
+    else {
+        $.ajax({
+            type: 'POST',
+            url: 'addCategory',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            data: {
+                'new_category_name': $('.add_category_name').val(),
+                'new_category_type': $('.add_category_type').val()
+            },
+            beforeSend: function(){
+                $('.loadingAnim').show()
+            },
+            success: function(data){
+                hideModal()
+                loadSettings()
+                console.log(data)
+            },
 
-    })
+        })
+    }
+
 }
 
 function editCategoryConfirm(){
@@ -440,7 +437,7 @@ function editCategoryConfirm(){
         },
         success: function(data){
             hideModal()
-            loadCategory()
+            loadSettings()
             console.log(data)
         }
     })
@@ -458,7 +455,7 @@ function deleteCategory(){
         },
         success: function(data){
             hideModal()
-            loadCategory()
+            loadSettings()
             console.log(data)
         }
     })
@@ -471,10 +468,12 @@ function categoryDetail(category_id, category_name){
     `)
 }
 
-function loadCategory(){
+//loadsettings
+function loadSettings(){
     $.ajax({
         type: 'GET',
-        url: 'loadCategory',
+        url: 'loadSettings',
+        data: 'data',
         beforeSend: function(){
             $('.loadingAnim').show()
         },
@@ -482,16 +481,33 @@ function loadCategory(){
             $('.loadingAnim').hide()
         },
         success: function(data){
+            console.log(data)
             var category = JSON.parse(data.category)
+            var account = JSON.parse(data.account)
+            $('.accountContainerBody').html('')
             $('.categoryContainerBody').html('')
             for (var i in category) {
                 var categorySub = $(`
                     <div class="categorySub">
-                        <span>${category[i].fields.categoryName}</span>
+                        <div>${category[i].fields.categoryName}</div>
                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".categoryModal" onclick="categoryDetail('${category[i].pk}', '${category[i].fields.categoryName}')">Edit</button>
                     </div>
                 `)
-                $('.categoryContainerBody').append(categorySub)
+                if (category[i].fields.categoryType=='expense') {
+                    $('.categoryExpense').append(categorySub)
+                }
+                if (category[i].fields.categoryType=='income') {
+                    $('.categoryIncome').append(categorySub)
+                }
+            }
+            for (var i in account) {
+                var accountSub = $(`
+                    <div class="accountSub">
+                        <div>${account[i].fields.accountName} (${account[i].fields.accountType}) - Balance: ${account[i].fields.accountBalance}</div>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".accountModal" onclick="accountDetail('${account[i].pk}', '${account[i].fields.accountName}', '${account[i].fields.accountBalance}', '${account[i].fields.accountType}')">Edit</button>
+                    </div>
+                `)
+                $('.accountContainerBody').append(accountSub)
             }
         }
     })
@@ -547,130 +563,186 @@ function editEntry(entry_id){
             $('.loadingAnim').hide();
         },
         success: function(data){
+            $('.editEntryForm').show()
             var accounts = JSON.parse(data.accounts)
             var category = JSON.parse(data.category)
             var chosen_entry = JSON.parse(data.chosen_entry)
             var pk = chosen_entry[0].pk
             var amount = chosen_entry[0].fields.amount
-            var entry_category = lookUpCategory(chosen_entry[0].fields.category, category)
+            // var entry_category = lookUpCategory(chosen_entry[0].fields.category, category)
+            var entry_category = chosen_entry[0].fields.category
             var entry_date = chosen_entry[0].fields.entryDate
             var entry_note = chosen_entry[0].fields.entryNote
             var from_account = chosen_entry[0].fields.fromAccount
             var to_account = chosen_entry[0].fields.toAccount
             var type = chosen_entry[0].fields.type
-            if (type == "Expense") {
+            if (type == "expense") {
                 $('.editEntryForm').html(`
                     <input type="hidden" class="edit_entry_pk" value="${pk}">
                     <input type="hidden" class="edit_entry_to" value="0">
-                    <div style='display:flex;'>
-                    <label for="edit_entry_amount">Amount</label>
-                    <input class="form-control edit_entry_amount" type="text" value="${amount}"></div>
-                    <div style='display:flex;'>
-                    <label for="edit_entry_from">Account</label>
-                    <select class="form-control edit_entry_from"></select></div>
-                    <div style='display:flex;'>
-                    <label for="edit_entry_category">Category</label>
-                    <select class="form-control edit_entry_category"></select></div>
-                    <div style='display:flex;'>
-                    <label for="edit_entry_note">Note</label>
-                    <input class="form-control edit_entry_note" type="text" value="${entry_note}"></div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_amount" value="${amount}">
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_from" class="col-sm-4 col-form-label">Account</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_from"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_category"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_note" value="${entry_note}">
+                        </div>
+                    </div>
                     <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
                 `)
                 for (var i in accounts) {
-                    var x = accounts[i].fields.accountName
+                    var x = accounts[i].pk
                     if (x == from_account) {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                     else {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                 }
                 for (var i in category) {
-                    var x = category[i].fields.categoryName
+                    var x = category[i].pk
                     if (x == entry_category) {
+                        x = lookUpCategory(x, category)
                         var option = $(`<option value="${category[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                     else {
+                        x = lookUpCategory(x, category)
                         var option = $(`<option value="${category[i].pk}">${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                 }
             }
-            if (type == "Income") {
+            if (type == "income") {
                 $('.editEntryForm').html(`
                     <input type="hidden" class="edit_entry_pk" value="${pk}">
-                    <input type="hidden" class="edit_entry_from" value="0">
-                    <label for="edit_entry_amount">Amount</label>
-                    <input class="form-control edit_entry_amount" type="text" value="${amount}">
-                    <label for="edit_entry_to">Account</label>
-                    <select class="form-control edit_entry_to">
-                    </select>
-                    <label for="edit_entry_category">Category</label>
-                    <select class="form-control edit_entry_category">
-                    </select>
-                    <label for="edit_entry_note">Note</label>
-                    <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                    <input type="hidden" class="edit_entry_from">
+                    <div class='form-group row'>
+                        <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_amount" value="${amount}">
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_to" class="col-sm-4 col-form-label">Account</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_to"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_category"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                        </div>
+                    </div>
                     <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
                 `)
                 for (var i in accounts) {
-                    var x = accounts[i].fields.accountName
+                    var x = accounts[i].pk
                     if (x == to_account) {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_to').append(option)
                     }
                     else {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_to').append(option)
                     }
                 }
                 for (var i in category) {
-                    var x = category[i].fields.categoryName
+                    var x = category[i].pk
                     if (x == entry_category) {
+                        x = lookUpCategory(x, category)
                         var option = $(`<option value="${category[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                     else {
+                        x = lookUpCategory(x, category)
                         var option = $(`<option value="${category[i].pk}">${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                 }
             }
-            if (type == "Transfer") {
+            if (type == "transfer") {
                 $('.editEntryForm').html(`
                     <input type="hidden" class="edit_entry_pk" value="${pk}">
-                    <label for="edit_entry_amount">Amount</label>
-                    <input class="form-control edit_entry_amount" type="text" value="${amount}">
-                    <label for="edit_entry_from">From</label>
-                    <select class="form-control edit_entry_from">
-                    </select>
-                    <label for="edit_entry_to">To</label>
-                    <select class="form-control edit_entry_to">
-                    </select>
-                    <label for="edit_entry_category">Category</label>
-                    <select class="form-control edit_entry_category">
-                    </select>
-                    <label for="edit_entry_note">Note</label>
-                    <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                    <div class='form-group row'>
+                        <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_from" class="col-sm-4 col-form-label">From</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_from"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_to" class="col-sm-4 col-form-label">To</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_to"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_category"></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_note" value="${entry_note}">
+                        </div>
+                    </div>
                     <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
                 `)
                 for (var i in accounts) {
-                    var x = accounts[i].fields.accountName
+                    var x = accounts[i].pk
                     if (x == to_account) {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_to').append(option)
                         var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_from').append(option)
                     }
                     if (x == from_account) {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_from').append(option)
                         var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_to').append(option)
                     }
                     else {
+                        x = lookUpAccount(x, accounts)
                         var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
                         $('.edit_entry_to').append(option)
                         var option = $(`<option value="${accounts[i].pk}">${x}</option>`)
@@ -678,22 +750,53 @@ function editEntry(entry_id){
                     }
                 }
                 for (var i in category) {
-                    var x = category[i].fields.categoryName
+                    var x = category[i].pk
                     if (x == entry_category) {
+                        x = lookUpCategory(x, category)
                         var option = $(`<option value="${category[i].pk}" selected>${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                     else {
+                        x = lookUpCategory(x, category)
                         var option = $(`<option value="${category[i].pk}">${x}</option>`)
                         $('.edit_entry_category').append(option)
                     }
                 }
+            }
+            if (type == "system") {
+                x = lookUpAccount(to_account, accounts)
+                $('.editEntryForm').html(`
+                    <input type="hidden" class="edit_entry_pk" value="${pk}">
+                    <input type="hidden" class="edit_entry_from" value="${from_account}">
+                    <div class='form-group row'>
+                        <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_category" class="col-sm-4 col-form-label">Account</label>
+                        <div class="col-sm-8">
+                            <select class="form-control edit_entry_to">
+                                <option selected value='${to_account}'>${x}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
+                        <div class="col-sm-8">
+                            <input class="form-control edit_entry_note" value="${entry_note}">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                `)
             }
         }
     })
 }
 
 function editEntryConfirm(){
+    console.log($('.edit_entry_to').value)
     $.ajax({
         type: 'POST',
         url: 'editEntryConfirm',
@@ -711,15 +814,14 @@ function editEntryConfirm(){
         beforeSend: function () {
             $('.loadingAnim').show();
         },
-        complete: function () {
-            $('.loadingAnim').hide();
-        },
         success: function(data){
             hideModal()
             var entry_change_flag = JSON.parse(data.entry_change_flag)
             if (entry_change_flag == true) {
                 loadEntry()
                 console.log('changes')
+            } else {
+                $('.loadingAnim').hide();
             }
         }
     })
@@ -803,7 +905,7 @@ function loadEntry(){
 
                 for (var y in transaction) {
                     if (transaction[y].fields.entryDate == transaction_date[x].fields.entryDate) {
-                        if (transaction[y].fields.type == 'Income') {
+                        if (transaction[y].fields.type == 'income') {
                             var to_account_name = lookUpAccount(transaction[y].fields.toAccount, accounts)
                             var category_name = lookUpCategory(transaction[y].fields.category, category)
                             var transactionDivSubSub =
@@ -820,7 +922,7 @@ function loadEntry(){
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
                         }
-                        if (transaction[y].fields.type == 'Expense') {
+                        if (transaction[y].fields.type == 'expense') {
                             var from_account_name = lookUpAccount(transaction[y].fields.fromAccount, accounts)
                             var category_name = lookUpCategory(transaction[y].fields.category, category)
                             var transactionDivSubSub =
@@ -837,7 +939,7 @@ function loadEntry(){
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
                         }
-                        if (transaction[y].fields.type == 'Transfer') {
+                        if (transaction[y].fields.type == 'transfer') {
                             var to_account_name = lookUpAccount(transaction[y].fields.toAccount, accounts)
                             var from_account_name = lookUpAccount(transaction[y].fields.fromAccount, accounts)
                             var category_name = lookUpCategory(transaction[y].fields.category, category)
@@ -856,7 +958,7 @@ function loadEntry(){
                             </div>`;
                             transactionDivSub.append(transactionDivSubSub)
                         }
-                        if (transaction[y].fields.type == 'System') {
+                        if (transaction[y].fields.type == 'system') {
                             var from_account_name = lookUpAccount(transaction[y].fields.fromAccount, accounts)
                             var transactionDivSubSub =
                             `<div class="transactionDivSubSub divSystem" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target=".indexModal" onclick="selectEntry(${transaction[y].pk})">
@@ -883,7 +985,7 @@ function loadEntry(){
 // misc
 function convertDate(date) {
     var month = parseInt(date.getMonth())+1
-    if (date.getMonth()<10) {
+    if (month<10) {
         month = "0"+month
     }
     if (date.getDate()<10) {
@@ -946,13 +1048,13 @@ function openTab(env, tab_name){
     $('.'+tab_name).addClass('selectedTab')
     $('.'+tab_name).show()
     if (tab_name == 'incomeForm') {
-        $('.new_entry_type').val('Income')
+        $('.new_entry_type').val('income')
     }
     if (tab_name == 'expenseForm') {
-        $('.new_entry_type').val('Expense')
+        $('.new_entry_type').val('expense')
     }
     if (tab_name == 'transferForm') {
-        $('.new_entry_type').val('Transfer')
+        $('.new_entry_type').val('transfer')
     }
 }
 
@@ -964,14 +1066,16 @@ function closeTab(){
 function lookUpAccount(pk, account){
     for (var i in account) {
         if (account[i].pk == pk) {
-            return(account[i].fields.accountName)
+            var str = account[i].fields.accountName
+            return(str.charAt(0).toUpperCase()+str.slice(1))
         }
     }
 }
 function lookUpCategory(pk, category){
     for (var i in category) {
         if (category[i].pk == pk) {
-            return(category[i].fields.categoryName)
+            var str = category[i].fields.categoryName
+            return(str.charAt(0).toUpperCase()+str.slice(1))
         }
     }
 }

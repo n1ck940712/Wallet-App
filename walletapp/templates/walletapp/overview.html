@@ -6,8 +6,8 @@
 <div class="overviewContainer" style="display:flex;overflow:auto;">
     {% for item in accounts %}
     <div class="accountDiv text-center col-4 notSelectedAccount" id="{{item.pk}}" style="cursor:pointer;">
-        <h4>{{item.accountName}}</h4>
-        <span>Type: </span><span>{{item.accountType}}</span><br>
+        <h4>{{item.accountName|title}}</h4>
+        <span>Type: </span><span>{{item.accountType|title}}</span><br>
         <span>Balance: </span><span>{{item.accountBalance}}</span>
     </div>
     {% endfor %}

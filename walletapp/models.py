@@ -28,7 +28,7 @@ class dbCategory(models.Model):
 
 class dbEntry(models.Model):
     amount = models.FloatField()
-    category = models.ForeignKey(dbCategory, on_delete=models.CASCADE, null=True)
+    category = models.ForeignKey(dbCategory, on_delete=models.CASCADE, null=True, blank=True)
     entryTime = models.TimeField(default=now, null=True)
     entryDate = models.DateField(default=now, null=True)
     fromAccount = models.ForeignKey(dbAccount, on_delete=models.CASCADE, related_name='fromAccount', null=True, blank=True)
