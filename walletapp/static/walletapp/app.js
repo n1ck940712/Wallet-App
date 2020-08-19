@@ -36,10 +36,6 @@ $(document).ready(function (){
         $('.filterdateEnd').val(picker.endDate.format('YYYY-MM-DD'))
     });
 
-    $('.addEntryButton').click(function(){ //set today date when add entry
-        $(".new_entry_date").val(getTodayDate())
-    })
-
     $('.submitNewEntry').click(function(){ // confirm new entry
         addEntry()
     })
@@ -49,8 +45,9 @@ $(document).ready(function (){
         $('.filterNote').val('')
         $('.filterAccount').val('')
         $('.filterCategory').val('')
-        $('.filterdateStart').val('')
-        $('.filterdateEnd').val('')
+        $('.filterDateStart').val('')
+        $('.filterDateEnd').val('')
+        $('.filterDate').val('All Time')
         loadEntry()
     })
 
@@ -157,6 +154,7 @@ $(document).ready(function (){
                     backgroundColor: [
 						window.chartColors.blue,
 					],
+                    lineTension: 0
                 }]
             },
             options: {
@@ -167,12 +165,12 @@ $(document).ready(function (){
                             unit: 'day'
                         },
                         gridLines: {
-                            show: false
+                            // display:false
                         }
                     }],
                     yAxes: [{
                         gridLines: {
-                            show: false
+                            // display: false,
                         },
                         ticks: {
                             beginAtZero: true
@@ -186,13 +184,15 @@ $(document).ready(function (){
                 legend: {
                     display: false
                 },
+                // elements: {
+                //     point:{
+                //         radius: 0
+                //     }
+                // }
             }
         });
     }
-
-    $('.accountDiv').click(function(){
-        $(this).siblings().removeClass('selectedAccount').addClass('notSelectedAccount')
-        $(this).addClass('selectedAccount').removeClass('notSelectedAccount')
+    $('.accountSelect').change(function(){
         getAccountOverview()
     })
 
@@ -219,7 +219,7 @@ function getAccountOverview(){
         type: 'GET',
         url: 'getAccountOverview',
         data: {
-            "selected_account": $('.selectedAccount').attr('id'),
+            "selected_account": $('.accountSelect').val(),
             'filter_date_start': filter_start_date,
             'filter_date_end': filter_end_date,
             'filter_date_end+1': convertDate(filter_end_date_plus1),
@@ -569,7 +569,6 @@ function editEntry(entry_id){
             var chosen_entry = JSON.parse(data.chosen_entry)
             var pk = chosen_entry[0].pk
             var amount = chosen_entry[0].fields.amount
-            // var entry_category = lookUpCategory(chosen_entry[0].fields.category, category)
             var entry_category = chosen_entry[0].fields.category
             var entry_date = chosen_entry[0].fields.entryDate
             var entry_note = chosen_entry[0].fields.entryNote
@@ -581,26 +580,26 @@ function editEntry(entry_id){
                     <input type="hidden" class="edit_entry_pk" value="${pk}">
                     <input type="hidden" class="edit_entry_to" value="0">
                     <div class='form-group row'>
-                        <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
-                        <div class="col-sm-8">
+                        <label for="edit_entry_amount" class="col-4 col-form-label">Amount</label>
+                        <div class="col-8">
                             <input class="form-control edit_entry_amount" value="${amount}">
                         </div>
                     </div>
                     <div class='form-group row'>
-                        <label for="edit_entry_from" class="col-sm-4 col-form-label">Account</label>
-                        <div class="col-sm-8">
+                        <label for="edit_entry_from" class="col-4 col-form-label">Account</label>
+                        <div class="col-8">
                             <select class="form-control edit_entry_from"></select>
                         </div>
                     </div>
                     <div class='form-group row'>
-                        <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
-                        <div class="col-sm-8">
+                        <label for="edit_entry_category" class="col-4 col-form-label">Category</label>
+                        <div class="col-8">
                             <select class="form-control edit_entry_category"></select>
                         </div>
                     </div>
                     <div class='form-group row'>
-                        <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
-                        <div class="col-sm-8">
+                        <label for="edit_entry_note" class="col-4 col-form-label">Note</label>
+                        <div class="col-8">
                             <input class="form-control edit_entry_note" value="${entry_note}">
                         </div>
                     </div>
@@ -1045,8 +1044,11 @@ function hideModal(){
 function openTab(env, tab_name){
     $('.tabContent').removeClass('selectedTab')
     $('.tabContent').hide()
+    $('.tabContent').find('input').val('')
+    $('.tabContent').find('select').val('')
     $('.'+tab_name).addClass('selectedTab')
     $('.'+tab_name).show()
+    $(".new_entry_date").val(getTodayDate())
     if (tab_name == 'incomeForm') {
         $('.new_entry_type').val('income')
     }

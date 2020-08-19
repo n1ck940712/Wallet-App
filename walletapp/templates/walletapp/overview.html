@@ -3,54 +3,52 @@
 {% block body %}
 {% load static %}
 
-<div class="overviewContainer" style="display:flex;overflow:auto;">
-    {% for item in accounts %}
-    <div class="accountDiv text-center col-4 notSelectedAccount" id="{{item.pk}}" style="cursor:pointer;">
-        <h4>{{item.accountName|title}}</h4>
-        <span>Type: </span><span>{{item.accountType|title}}</span><br>
-        <span>Balance: </span><span>{{item.accountBalance}}</span>
+<div class="container-fluid overviewBtmContainer" style="overflow:auto;height:90vh">
+    <div class="row">
+        <div class="col-md-3" style="padding:0;">
+            <div class="summaryContainer">
+                <div class="summaryContainerHeader text-center">
+                    <h4>Summary</h4>
+                </div>
+                <hr>
+                <!-- filter -->
+                <input type="hidden" class="filterDateStart" value="">
+                <input type="hidden" class="filterDateEnd" value="">
+                <select class="accountSelect form-control">
+                    {% for item in accounts %}
+                    <option value="{{item.pk}}">{{item.accountName|title}} - Balance: ${{item.accountBalance}}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" class="filterDate form-control">
+                <div class="summaryContainerSub divIncome">
+                    <div>Total Income</div>
+                    <div class="totalIncome"></div>
+                </div>
+                <div class="summaryContainerSub divExpense">
+                    <div>Total Expense</div>
+                    <div class="totalExpense"></div>
+                </div>
+                <div class="summaryContainerSub divTransfer">
+                    <div>Total Transfer</div>
+                    <div class="totalTransfer"></div>
+                </div>
+                <div class="summaryContainerSub divSystem">
+                    <div>Balance Change</div>
+                    <div class="totalChange"></div>
+                </div>
+            </div>
+        </div>
+        <!-- chart canvas -->
+        <div class="col-md-9" style="padding:0;">
+            <div class="chartContainer row">
+                <div class="leftSectionChart col-md-6">
+                    <canvas id="expenseChart" width="300" height="180"></canvas>
+                    <canvas id="incomeChart" width="300" height="180"></canvas>
+                </div>
+                <canvas class='col-md-6' id="balanceChart" width="300" height="330"></canvas>
+            </div>
+        </div>
     </div>
-    {% endfor %}
-</div>
-
-<div class="container-fluid" style="overflow:auto;height:400px;display:flex;">
-    <div class="summaryContainer col-md-3">
-        <div class="summaryContainerHeader text-center">
-            <h4>Summary</h4>
-        </div>
-        <hr>
-        <!-- filter -->
-        <input type="hidden" class="filterDateStart" value="">
-        <input type="hidden" class="filterDateEnd" value="">
-        <input type="text" class="filterDate form-control">
-        <div class="summaryContainerSub divIncome">
-            <div>Total Income</div>
-            <div class="totalIncome"></div>
-        </div>
-        <div class="summaryContainerSub divExpense">
-            <div>Total Expense</div>
-            <div class="totalExpense"></div>
-        </div>
-        <div class="summaryContainerSub divTransfer">
-            <div>Total Transfer</div>
-            <div class="totalTransfer"></div>
-        </div>
-        <div class="summaryContainerSub divSystem">
-            <div>Balance Change</div>
-            <div class="totalChange"></div>
-        </div>
-
-    </div>
-
-    <!-- chart canvas -->
-    <div class="chartContainer col-md-9" style='display:flex;'>
-        <div class="leftSectionChart col-6">
-            <canvas class='col-12' id="expenseChart" width="300" height="180"></canvas>
-            <canvas class='col-12' id="incomeChart" width="300" height="180"></canvas>
-        </div>
-        <canvas class='col-6' id="balanceChart" width="300" height="330"></canvas>
-    </div>
-
 </div>
 <div class="loadingAnim" style="text-align:center;display:none;">
     <div class="loadingAnimSub col-4">
@@ -58,18 +56,5 @@
         <p>Please Wait</p>
     </div>
 </div>
+
 {% endblock %}
-
-
-
-
-<!-- Account Summary -->
-<!-- transaction summary -->
-<!-- <div class="transContr">
-    <div class="transContrHeadr text-center">
-        <h4>Transactions</h4>
-    </div>
-    <hr>
-    <div class="transContrCont">
-    </div>
-</div> -->

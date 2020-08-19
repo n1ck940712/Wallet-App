@@ -11,11 +11,17 @@ html,body{
     padding: 15px;
     margin: 0 auto;
 }
-.transactionDiv{
-    height: 425px;
+.indexRightContainer{
+    height: 85vh;
     overflow: auto;
 }
 .transactionDivSub{
+    background-color: #9e9e9e;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px;
+}
+.filterContainer{
     background-color: #9e9e9e;
     border-radius: 5px;
     padding: 5px;
@@ -55,9 +61,6 @@ html,body{
     padding:10px;
     display: none;
 }
-.topContainer{
-    margin-top:10px;
-}
 
 .accountDiv{
     border-radius: 5px;
@@ -76,8 +79,12 @@ html,body{
 .summaryContainer{
     background-color: #9e9e9e;
     border-radius: 5px;
-    margin: 5px;
+    margin: 1vh;
     padding: 5px;
+    height: 88vh;
+}
+.navbar{
+    min-height: 10vh;
 }
 
 .summaryContainerSub{
@@ -102,7 +109,7 @@ html,body{
 }
 
 .categoryContainer, .accountContainer{
-    margin: auto;
+    margin: 1vh;
     margin-top: 5px;
     border-radius: 5px;
     padding: 5px;
@@ -138,12 +145,13 @@ html,body{
 .chartContainer{
     background-color: #d1ddff;
     border-radius: 5px;
-    margin: 5px;
+    margin: 1vh;
     padding: 5px;
+    height: 88vh;
 }
 
 .modal{
-    top: 15%;
+    top: 15vh;
 }
 
 .categoryContainerHeader,
@@ -168,4 +176,23 @@ html,body{
 hr{
     margin: 5px 0px 5px 0px;
     border-top: 1px solid black;
+}
+
+@media (max-width: 767px) {
+  body{
+    overflow: auto;
+  }
+  .indexRightContainer{
+    overflow: auto;
+  }
+
+}
+@media (max-width: 767px) {
+  .summaryContainer{
+    height: 100%;
+  }
+  .chartContainer{
+    height: 100%;
+  }
+
 }

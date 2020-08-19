@@ -1,58 +1,55 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Index Page{% endblock %}
 {% block body %}
+{% csrf_token %}
 {% load mathfilters %}
-
-<!-- filter container -->
-<div class="topContainer">
-    {% csrf_token %}
-    <div class="filterContainer" style="display:flex">
-        <!-- filter form -->
-        <form class="form-group col-10" style="display:flex;">
-            <input type="text" class="filterNote col-2 form-control" placeholder="Filter Note" autocomplete="off">
-            <select class="filterCategory form-control">
-                <option value="" selected>All Category</option>
-                {% for item in category %}
-                <option value="{{item.pk}}">{{item.categoryName|title}}</option>
-                {% endfor %}
-            </select>
-            <select class="filterAccount form-control">
-                <option value="" selected>All Accounts</option>
-                {% for item in accounts %}
-                <option value="{{item.pk}}">{{item.accountName|title}}</option>
-                {% endfor %}
-            </select>
-            <select class="filterType form-control">
-                <option value="" selected>All Transaction</option>
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
-                <option value="transfer">Transfer</option>
-            </select>
-            <input type="text" class="filterDate form-control col-3">
-            <input type="hidden" class="filterDateStart">
-            <input type="hidden" class="filterDateEnd">
-            <button type="button" class="filterButton btn btn-primary btn-md form-control">Filter</button>
-        </form>
-        <button class="addEntryButton btn btn-success btn-block form-control" data-toggle="modal" data-target=".addEntryModal">New Transaction</button>
-    </div>
-
-    <!-- clearfilter -->
-    <div class="clearFilter text-center">
-        <button class="clearFilterButton btn btn-secondary btn-sm">Clear Filter</button>
-    </div>
-</div>
-
-<!-- transactions div -->
-<div class="container">
-    <!-- loading animation -->
-    <div class="loadingAnim" style="text-align:center;display:none;">
-        {% load static %}
-        <div class="loadingAnimSub col-4">
-            <img src="{% static 'walletapp/images/loading.gif' %}"/>
-            <p>Please Wait</p>
+<div class="container-fluid">
+    <div class="row">
+        <!-- filter container -->
+        <div class="indexLeftContainer col-md-4">
+            <div class="filterContainer">
+                <!-- filter form -->
+                <div class="form-group">
+                    <input class="filterNote form-control" placeholder="Filter Note" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <select class="filterCategory form-control">
+                        <option value="" selected>All Category</option>
+                        {% for item in category %}
+                        <option value="{{item.pk}}">{{item.categoryName|title}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select class="filterAccount form-control">
+                        <option value="" selected>All Accounts</option>
+                        {% for item in accounts %}
+                        <option value="{{item.pk}}">{{item.accountName|title}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select class="filterType form-control">
+                        <option value="" selected>All Transaction</option>
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                        <option value="transfer">Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input class="filterDate form-control">
+                    <input type="hidden" class="filterDateStart">
+                    <input type="hidden" class="filterDateEnd">
+                </div>
+                    <button class="filterButton btn btn-primary btn-md form-control">Filter</button>
+                    <button class="clearFilterButton btn btn-secondary btn-md form-control">Clear Filter</button>
+                    <button class="addEntryButton btn btn-success form-control" data-toggle="modal" data-target=".addEntryModal">New Transaction</button>
+            </div>
         </div>
-    </div>
-    <div class="transactionDiv">
+        <!-- transactions div -->
+        <div class="indexRightContainer col-md-8">
+            <div class="transactionDiv"></div>
+        </div>
     </div>
 </div>
 
@@ -134,7 +131,7 @@
                         <select class="form-control new_entry_from">
                             <option value="" selected disabled>Account</option>
                             {% for item in accounts %}
-                            <option value="{{item.accountName}}">{{item.accountName|title}}</option>
+                            <option value="{{item.pk}}">{{item.accountName|title}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -162,17 +159,17 @@
                     </div>
                     <div class="form-group">
                         <select class="form-control new_entry_from" name="new_entry_from">
-                            <option value="" selected disabled>From</option>
+                            <option value="" selected disabled>Select origin account</option>
                             {% for item in accounts %}
-                            <option value="{{item.accountName}}">{{item.accountName|title}}</option>
+                            <option value="{{item.pk}}">{{item.accountName|title}}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <select class="form-control new_entry_to" name="new_entry_to">
-                            <option value="" selected disabled>To</option>
+                            <option value="" selected disabled>Select destination account</option>
                             {% for item in accounts %}
-                            <option value="{{item.accountName}}">{{item.accountName|title}}</option>
+                            <option value="{{item.pk}}">{{item.accountName|title}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -188,5 +185,12 @@
         </div>
     </div>
 </div>
-
+<!-- loading animation -->
+<div class="loadingAnim" style="text-align:center;display:none;">
+    {% load static %}
+    <div class="loadingAnimSub col-4">
+        <img src="{% static 'walletapp/images/loading.gif' %}"/>
+        <p>Please Wait</p>
+    </div>
+</div>
 {% endblock %}

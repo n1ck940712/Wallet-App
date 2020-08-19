@@ -150,10 +150,12 @@ def addEntry(request):
             get_account.accountBalance=str(float(get_account.accountBalance)-float(new_entry_amount))
             get_account.save()
             new_entry_amount = str(float(new_entry_amount)*(-1))
+            new_entry = dbEntry(amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), fromAccount=dbAccount.objects.get(pk=new_entry_from), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         if new_entry_type=="income":
             get_account = dbAccount.objects.get(pk=new_entry_to)
             get_account.accountBalance=str(float(get_account.accountBalance)+float(new_entry_amount))
             get_account.save()
+            new_entry = dbEntry(amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), toAccount=dbAccount.objects.get(new_entry_to), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         if new_entry_type=="transfer":
             get_account_from = dbAccount.objects.get(pk=new_entry_from)
             get_account_to = dbAccount.objects.get(pk=new_entry_to)
@@ -161,7 +163,7 @@ def addEntry(request):
             get_account_to.accountBalance=str(float(get_account_to.accountBalance)+float(new_entry_amount))
             get_account_to.save()
             get_account_from.save()
-        new_entry = dbEntry(amount=new_entry_amount, category=new_entry_category, fromAccount=new_entry_from, toAccount=new_entry_to, entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
+            new_entry = dbEntry(amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), fromAccount=dbAccount.objects.get(pk=new_entry_from), toAccount=dbAccount.objects.get(new_entry_to), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         new_entry.save()
 
         data = {
@@ -268,20 +270,20 @@ def editEntryConfirm(request):
 def deleteEntry(request):
     del_entry = dbEntry.objects.get(pk=request.GET.get('entry_id'))
     if del_entry.type=="expense":
-        get_account = dbAccount.objects.get(pk=del_entry.fromAccount)
+        get_account = dbAccount.objects.get(pk=del_entry.fromAccount.pk)
         get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
         get_account.save()
     if del_entry.type=="income":
-        get_account = dbAccount.objects.get(pk=del_entry.toAccount)
+        get_account = dbAccount.objects.get(pk=del_entry.toAccount.pk)
         get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
         get_account.save()
     if del_entry.type=="System":
-        get_account = dbAccount.objects.get(pk=del_entry.toAccount)
+        get_account = dbAccount.objects.get(pk=del_entry.toAccount.pk)
         get_account.accountBalance=str(float(get_account.accountBalance)-float(del_entry.amount))
         get_account.save()
     if del_entry.type=="transfer":
-        get_account_from = dbAccount.objects.get(pk=del_entry.fromAccount)
-        get_account_to = dbAccount.objects.get(pk=del_entry.toAccount)
+        get_account_from = dbAccount.objects.get(pk=del_entry.fromAccount.pk)
+        get_account_to = dbAccount.objects.get(pk=del_entry.toAccount.pk)
         get_account_from.accountBalance=str(float(get_account_from.accountBalance)+float(del_entry.amount))
         get_account_to.accountBalance=str(float(get_account_to.accountBalance)-float(del_entry.amount))
         get_account_to.save()

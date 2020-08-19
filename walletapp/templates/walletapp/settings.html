@@ -1,34 +1,40 @@
 {% extends 'walletapp/layout.html' %}
 {% block title %}Settings{% endblock %}
 {% block body %}
-
+{% csrf_token %}
+{% load static %}
 <!-- loading -->
 <div class="loadingAnim" style="text-align:center;display:hidden;">
-    {% load static %}
     <div class="loadingAnimSub col-4">
         <img src="{% static 'walletapp/images/loading.gif' %}"/>
         <p>Please Wait</p>
     </div>
 </div>
-<div class="container-fluid" style="display:flex">
-    <div class="accountContainer col-md-5">
-        <div class="accountContainerHeader">
-            <h5>Account</h5>
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addAccountModal" name="button">Add</button>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-6" style="padding:0;">
+            <div class="accountContainer">
+                <div class="accountContainerHeader">
+                    <h5>Account</h5>
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addAccountModal" name="button">Add</button>
+                </div>
+                <hr>
+                <div class="accountContainerBody"></div>
+            </div>
         </div>
-        <hr>
-        <div class="accountContainerBody"></div>
-    </div>
-    <div class="categoryContainer col-md-5">
-        <div class="categoryContainerHeader">
-            <h5>Category</h5>
-            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addCategoryModal" name="button">Add</button>
+        <div class="col-md-6" style="padding:0;">
+            <div class="categoryContainer">
+                <div class="categoryContainerHeader">
+                    <h5>Category</h5>
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addCategoryModal" name="button">Add</button>
+                </div>
+                <hr>
+                <h6>Income</h6>
+                <div class="categoryContainerBody categoryIncome"></div>
+                <h6>Expense</h6>
+                <div class="categoryContainerBody categoryExpense"></div>
+            </div>
         </div>
-        <hr>
-        <h6>Income</h6>
-        <div class="categoryContainerBody categoryIncome"></div>
-        <h6>Expense</h6>
-        <div class="categoryContainerBody categoryExpense"></div>
     </div>
 </div>
 
@@ -38,22 +44,23 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title addCategoryModalLabel">New Category</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                <button class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <form action="addCategory" method="post">
-                    {% csrf_token %}
-                    <div class="inviForm"></div>
-                    <input type="text" class="form-control add_category_name" placeholder="Name">
+            <div class="modal-body text-center">
+                <div class="inviForm"></div>
+                <div class="form-group">
+                    <input class="form-control add_category_name" placeholder="Name">
+                </div>
+                <div class="form-group">
                     <select class="add_category_type form-control">
                         <option value="" selected disabled>Category Type</option>
                         <option value="income">Income</option>
                         <option value="expense">Expense</option>
                     </select>
-                    <button type="button" class="btn btn-primary addNewCategory">Add</button>
-                </form>
+                </div>
+                <button class="btn btn-primary addNewCategory">Add</button>
             </div>
         </div>
     </div>
@@ -65,17 +72,17 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title categoryModalLabel">Category</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                <button class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-center">
                 <div class="inviForm"></div>
-                <input type="text" class="form-control edit_category_input">
-                <div style="display:flex;">
-                    <button type="button" class="btn btn-danger deleteCategoryConfirm" >Delete</button>
-                    <button type="button" class="btn btn-primary editCategoryConfirm">Edit</button>
+                <div class="form-group">
+                    <input type="text" class="form-control edit_category_input">
                 </div>
+                <button class="btn btn-danger deleteCategoryConfirm" >Delete</button>
+                <button class="btn btn-primary editCategoryConfirm">Edit</button>
             </div>
         </div>
     </div>
@@ -87,24 +94,30 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title accountModalLabel">Account</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                <button class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-center">
                 <div class="inviForm"></div>
-                <label for="edit_account_name">Account Name</label>
-                <input type="text" class="form-control edit_account_name">
-                <label for="edit_account_balance">Account Balance</label>
-                <input type="text" class="form-control edit_account_balance">
-                <label for="edit_account_type">Account Type</label>
-                <select class="form-control edit_account_type">
-                    {% for item in accountTypes %}
+                <div class="form-group row">
+                    <label for="edit_account_name" class="col-4 col-form-label">Account Name</label>
+                    <input class="form-control edit_account_name col-8">
+                </div>
+                <div class="form-group row">
+                    <label for="edit_account_balance" class="col-4 col-form-label">Account Balance</label>
+                    <input class="form-control edit_account_balance col-8">
+                </div>
+                <div class="form-group row">
+                    <label for="edit_account_type" class="col-4 col-form-label">Account Type</label>
+                    <select class="form-control edit_account_type col-8">
+                        {% for item in accountTypes %}
                         <option value="{{item.accountType}}">{{item.accountType}}</option>
-                    {% endfor %}
-                </select>
-                <button type="button" class="btn btn-primary editAccountConfirm">Edit</button>
-                <button type="button" class="btn btn-danger deleteAccountConfirm">Delete</button>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn btn-primary editAccountConfirm">Edit</button>
+                <button class="btn btn-danger deleteAccountConfirm">Delete</button>
             </div>
         </div>
     </div>
@@ -116,19 +129,22 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title addAccountModalLabel">New Account</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" >
+                <button class="close" data-dismiss="modal" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-center">
                 <div class="inviForm"></div>
-                <label for="edit_account_name">Account Name</label>
-                <input type="text" class="form-control add_account_name">
-                <label for="edit_account_balance">Account Balance</label>
-                <input type="text" class="form-control add_account_balance">
-                <label for="edit_account_type">Account Type</label>
-                <input type="text" class="form-control add_account_type">
-                <button type="button" class="btn btn-primary addAccountConfirm">Add</button>
+                <div class="form-group">
+                    <input class="form-control add_account_name" placeholder="Account Name">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control add_account_balance" placeholder="Account Balance">
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control add_account_type" placeholder="Account Type">
+                </div>
+                <button class="btn btn-primary addAccountConfirm">Add</button>
             </div>
         </div>
     </div>
