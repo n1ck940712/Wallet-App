@@ -70,7 +70,7 @@
                     <button type="button" class="entryEditButton btn btn-primary" style="margin:0px 15px 0px 15px">Edit</button>
                 </div>
                 <div class="editEntryHiddendiv"></div>
-                <div class="editEntryForm"></div>
+                <form class="editEntryForm" action="javascript:editEntryConfirm()"></form>
             </div>
         </div>
     </div>
@@ -92,7 +92,7 @@
                     <button class="tabButton btn btn-danger btn-md" onclick="openTab(event, 'expenseForm')">Expense</button>
                     <button class="tabButton btn btn-primary btn-md" onclick="openTab(event, 'transferForm')">Transfer</button>
                 </div>
-                <div class="tabContent incomeForm text-center">
+                <form class="tabContent incomeForm text-center" action="javascript:addEntry();">
                     <!-- <input type="hidden" class="new_entry_from" name="new_entry_from" value="Null"> -->
                     <input type="hidden" class="new_entry_type">
                     <div class="form-group">
@@ -109,7 +109,7 @@
                     <div class="form-group">
                         <select class="form-control new_entry_category" required>
                             <option value="" selected disabled>Category</option>
-                            {% for item in category %}
+                            {% for item in income_category %}
                             <option value="{{item.pk}}">{{item.categoryName|title}}</option>
                             {% endfor %}
                         </select>
@@ -120,9 +120,9 @@
                     <div class="form-group">
                         <input type="text" class="form-control new_entry_note" placeholder="Note" autocomplete="off">
                     </div>
-                    <button type="button" class="btn btn-primary submitNewEntry">Add</button>
-                </div>
-                <div class="tabContent expenseForm text-center">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </form>
+                <form class="tabContent expenseForm text-center" action="javascript:addEntry();>
                     <input type="hidden" class="new_entry_type">
                     <div class="form-group">
                         <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off">
@@ -138,7 +138,7 @@
                     <div class="form-group">
                         <select class="form-control new_entry_category">
                             <option value="" selected disabled>Category</option>
-                            {% for item in category %}
+                            {% for item in expense_category %}
                             <option value="{{item.pk}}">{{item.categoryName|title}}</option>
                             {% endfor %}
                         </select>
@@ -149,9 +149,9 @@
                     <div class="form-group">
                         <input type="text" class="form-control new_entry_note" placeholder="Note" autocomplete="off">
                     </div>
-                    <button type="button" class="btn btn-primary submitNewEntry">Add</button>
-                </div>
-                <div class="tabContent transferForm text-center">
+                    <button type="button" class="btn btn-primary">Add</button>
+                </form>
+                <form class="tabContent transferForm text-center" action="javascript:addEntry();>
                     <input type="hidden" class="new_entry_category" name="new_entry_category" value="transfer">
                     <input type="hidden" class="new_entry_type" name="new_entry_type" value="transfer">
                     <div class="form-group">
@@ -179,8 +179,8 @@
                     <div class="form-group">
                         <input type="text" class="form-control new_entry_note" name="new_entry_note" placeholder="Note" autocomplete="off">
                     </div>
-                    <button type="button" class="btn btn-primary submitNewEntry">Add</button>
-                </div>
+                    <button type="button" class="btn btn-primary">Add</button>
+                </form>
             </div>
         </div>
     </div>

@@ -9,6 +9,7 @@ urlpatterns = [
     # signin signout
     path('signin', views.signin, name='signin'),
     path('signout', views.signout, name='signout'),
+    path('register', views.register, name='register'),
     # account graph data
     path('getAccountOverview', views.getAccountOverview, name='getAccountOverview'),
     # entry

@@ -3,45 +3,54 @@ from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
-from .models import dbEntry, dbCategory, dbAccount, dbAccountType
+from .models import dbEntry, dbCategory, dbAccount, dbAccountType, MyUser
 from django.core import serializers
 from django.db.models import Sum
 import json
 
-#initialize superuser
-superuser = User.objects.filter(is_superuser=True)
+# initialize superuser
+superuser = MyUser.objects.filter(is_admin=True)
 if superuser.count() == 0:
-    superuser=User.objects.create_user("admin","admin@admin.com","password")
-    superuser.is_superuser = True
-    superuser.is_staff = True
+    superuser=MyUser.objects.create_user("admin","admin@admin.com","password")
+    superuser.is_admin = True
     superuser.save()
 
 # load pages
 def index(request):
     if not request.user.is_authenticated:
         return render(request, "walletapp/login.html", {"message": "Login first"})
+    #new User create default category and account
+    if not dbAccount.objects.filter(accountUser=request.user).exists():
+        print('no account')
+        init_account = dbAccount(accountUser=request.user, accountName='wallet', accountBalance=0, accountType = 'cash')
+        init_account.save()
+        account_first_entry = dbEntry(entryUser=request.user, amount=0, fromAccount=init_account, toAccount=init_account, entryNote='new account', type='system')
+        account_first_entry.save()
+    if not dbCategory.objects.filter(categoryUser=request.user).exists():
+        print('no category')
+        init_category = dbCategory(categoryUser=request.user, categoryName='income', categoryType='income')
+        init_category.save()
+        init_category = dbCategory(categoryUser=request.user, categoryName='expense', categoryType='expense')
+        init_category.save()
     context = {
     'user': request.user,
-    'accounts': dbAccount.objects.all().order_by('accountName'),
-    'category': dbCategory.objects.all().order_by('categoryName'),
-    'transactions': dbEntry.objects.all()
+    'accounts': dbAccount.objects.filter(accountUser=request.user).order_by('accountName'),
+    'expense_category': dbCategory.objects.filter(categoryUser=request.user, categoryType='expense').order_by('categoryName'),
+    'income_category': dbCategory.objects.filter(categoryUser=request.user, categoryType='income').order_by('categoryName'),
     }
     return render(request, "walletapp/index.html", context)
 
 def settings(request):
     context = {
     "user": request.user,
-    "category": dbCategory.objects.all().order_by("categoryName"),
-    "transaction": dbEntry.objects.all().reverse(),
-    "accounts": dbAccount.objects.all().order_by("accountName"),
     "accountTypes": dbAccount.objects.distinct('accountType').order_by('accountType'),
     "message": None,
     }
     return render(request, "walletapp/settings.html", context)
 
 def loadSettings(request):
-    get_category = dbCategory.objects.all().order_by('categoryName')
-    get_account = dbAccount.objects.all().order_by('accountName')
+    get_category = dbCategory.objects.filter(categoryUser=request.user, is_active=True).order_by('categoryName')
+    get_account = dbAccount.objects.filter(accountUser=request.user, is_active=True).order_by('accountName')
     data = {
         'account': serializers.serialize('json', get_account),
         'category': serializers.serialize('json', get_category),
@@ -49,9 +58,10 @@ def loadSettings(request):
     return JsonResponse(data)
 
 def overview(request):
+    get_account = dbAccount.objects.filter(accountUser=request.user).order_by('accountName')
     data = {
     # "user": request.user,
-    "accounts": dbAccount.objects.all().order_by("accountName"),
+    "accounts": get_account,
     "message": None,
     }
     return render(request, "walletapp/overview.html", data)
@@ -121,12 +131,12 @@ def getAccountOverview(request): # overview graph
         daily_change[str(item.entryDate)] = daily_total
         test_date = item.entryDate
         first_run_flag=False
+
     data = {
-    'category': serializers.serialize('json', dbCategory.objects.all().order_by('categoryName')),
+    'category': serializers.serialize('json', dbCategory.objects.filter(categoryUser=request.user).order_by('categoryName')),
     'daily_change': daily_change,
     "expense_category": list(filtered_expense_category),
     "income_category": list(filtered_income_category),
-    # "balance_history": list(balance_history),
     "total_change": total_change,
     "total_income": total_income,
     "total_expense": total_expense,
@@ -145,17 +155,18 @@ def addEntry(request):
         new_entry_date = request.POST.get('new_entry_date')
         new_entry_category = request.POST.get('new_entry_category')
         new_entry_amount = request.POST.get('new_entry_amount')
+        print(new_entry_from,new_entry_to,new_entry_category)
         if new_entry_type=="expense":
             get_account = dbAccount.objects.get(pk=new_entry_from)
             get_account.accountBalance=str(float(get_account.accountBalance)-float(new_entry_amount))
             get_account.save()
             new_entry_amount = str(float(new_entry_amount)*(-1))
-            new_entry = dbEntry(amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), fromAccount=dbAccount.objects.get(pk=new_entry_from), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
+            new_entry = dbEntry(entryUser=request.user, amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), fromAccount=dbAccount.objects.get(pk=new_entry_from), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         if new_entry_type=="income":
             get_account = dbAccount.objects.get(pk=new_entry_to)
             get_account.accountBalance=str(float(get_account.accountBalance)+float(new_entry_amount))
             get_account.save()
-            new_entry = dbEntry(amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), toAccount=dbAccount.objects.get(new_entry_to), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
+            new_entry = dbEntry(entryUser=request.user, amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), toAccount=dbAccount.objects.get(pk=new_entry_to), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         if new_entry_type=="transfer":
             get_account_from = dbAccount.objects.get(pk=new_entry_from)
             get_account_to = dbAccount.objects.get(pk=new_entry_to)
@@ -163,7 +174,7 @@ def addEntry(request):
             get_account_to.accountBalance=str(float(get_account_to.accountBalance)+float(new_entry_amount))
             get_account_to.save()
             get_account_from.save()
-            new_entry = dbEntry(amount=new_entry_amount, category=dbCategory.objects.get(pk=new_entry_category), fromAccount=dbAccount.objects.get(pk=new_entry_from), toAccount=dbAccount.objects.get(new_entry_to), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
+            new_entry = dbEntry(entryUser=request.user, amount=new_entry_amount, fromAccount=dbAccount.objects.get(pk=new_entry_from), toAccount=dbAccount.objects.get(pk=new_entry_to), entryNote=new_entry_note, type=new_entry_type, entryDate=new_entry_date)
         new_entry.save()
 
         data = {
@@ -302,46 +313,20 @@ def loadEntry(request):
     filter_account = request.GET.get('filterAccount')
     filter_date_start = request.GET.get('filterDateStart')
     filter_date_end = request.GET.get('filterDateEnd')
-    if filter_type != "" and filter_flag == True:
+    transaction_result = dbEntry.objects.filter(entryUser=request.user)
+    if filter_type != "":
         transaction_result = transaction_result.filter(type=filter_type)
-        filter_flag = True
-    elif filter_type != "":
-        transaction_result = dbEntry.objects.filter(type=filter_type)
-        filter_flag = True
-    if filter_category != "" and filter_flag == True:
+    if filter_category != "":
         transaction_result = transaction_result.filter(category=filter_category)
-        filter_flag = True
-    elif filter_category !="":
-        transaction_result = dbEntry.objects.filter(category=filter_category)
-        filter_flag = True
-    if filter_note != "" and filter_flag == True:
+    if filter_note != "":
         transaction_result = transaction_result.filter(entryNote=filter_note)
-        filter_flag = True
-    elif filter_note != "":
-        transaction_result = dbEntry.objects.filter(entryNote=filter_note)
-        filter_flag = True
-    if filter_account != "" and filter_flag == True:
+    if filter_account != "":
         transaction_result = transaction_result.filter(fromAccount=filter_account)|transaction_result.filter(toAccount=filter_account)
-        filter_flag = True
-    elif filter_account != "":
-        transaction_result = dbEntry.objects.filter(fromAccount=filter_account)|dbEntry.objects.filter(toAccount=filter_account)
-        filter_flag = True
     # Date filtering
     if filter_date_end == filter_date_start and filter_date_start != "":
-        if filter_flag == True:
-            transaction_result = transaction_result.filter(entryDate=filter_date_start)
-            filter_flag = True
-        else:
-            transaction_result = dbEntry.objects.filter(entryDate=filter_date_start)
-            filter_flag = True
+        transaction_result = transaction_result.filter(entryDate=filter_date_start)
     elif filter_date_end != filter_date_start:
-        if filter_flag == True:
-            transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
-        else:
-            transaction_result = dbEntry.objects.filter(entryDate__range=[filter_date_start, filter_date_end])
-            filter_flag = True
-    if filter_flag == False:
-        transaction_result = dbEntry.objects.all()
+        transaction_result = transaction_result.filter(entryDate__range=[filter_date_start, filter_date_end])
     data = {
     # "user": list(request.user),
     "category": serializers.serialize('json', dbCategory.objects.all().order_by("categoryName")),
@@ -356,12 +341,12 @@ def loadEntry(request):
 def addCategory(request):
     new_category_name = request.POST.get('new_category_name')
     new_category_type = request.POST.get('new_category_type')
-    if dbCategory.objects.filter(categoryName=new_category_name, categoryType=new_category_type).exists():
+    if dbCategory.objects.filter(categoryUser=request.user, categoryName=new_category_name, categoryType=new_category_type).exists():
         data = {
             'message': 'Another category with the same name. Add category failed.'
         }
     elif request.method == "POST":
-        edit_category = dbCategory(categoryName=new_category_name, categoryType=new_category_type)
+        edit_category = dbCategory(categoryUser=request.user, categoryName=new_category_name, categoryType=new_category_type)
         edit_category.save()
         data = {
             'message': 'add category success'
@@ -370,8 +355,8 @@ def addCategory(request):
 
 def editCategory(request):
     if request.method == "POST":
-        edit_category = dbCategory.objects.get(pk=request.GET.get('category_id'))
-        edit_category.categoryName=request.GET.get('edit_category_input')
+        edit_category = dbCategory.objects.get(pk=request.POST.get('category_id'))
+        edit_category.categoryName=request.POST.get('edit_category_input')
         edit_category.save()
     data = {
         'message': 'edit category success',
@@ -380,7 +365,11 @@ def editCategory(request):
 
 def deleteCategory(request):
     delete_category = dbCategory.objects.get(pk=request.GET.get('category_id'))
-    delete_category.delete()
+    if dbEntry.objects.filter(category=delete_category).exists():
+        delete_category.is_active=False
+        delete_category.save()
+    else:
+        delete_category.delete()
     data = {
         'message': 'delete category successful',
     }
@@ -388,14 +377,20 @@ def deleteCategory(request):
 
 # account
 def addAccount(request):
-    if request.method == "POST":
-        edit_account = dbAccount(accountName = request.POST['add_account_name'], accountBalance = request.POST['add_account_balance'], accountType = request.POST['add_account_type'])
-        edit_account.save()
-        account_first_entry = dbEntry(amount=request.POST.get('add_account_balance'), fromAccount=edit_account, toAccount=edit_account, entryNote='new account', type='system')
+    add_account_name = request.POST['add_account_name']
+    add_account_balance = request.POST.get('add_account_balance')
+    if  dbAccount.objects.filter(accountUser=request.user, accountName=add_account_name).exists():
+        data = {
+            'message': 'Another category with the same name. Add category failed.'
+        }
+    elif request.method == "POST":
+        add_account = dbAccount(accountUser=request.user, accountName=add_account_name, accountBalance=add_account_balance, accountType = request.POST['add_account_type'])
+        add_account.save()
+        account_first_entry = dbEntry(entryUser=request.user, amount=add_account_balance, fromAccount=add_account, toAccount=add_account, entryNote='new account', type='system')
         account_first_entry.save()
-    data = {
-        'message': 'add account successful'
-    }
+        data = {
+            'message': 'add account successful'
+        }
     return JsonResponse(data)
 
 def editAccount(request):
@@ -417,8 +412,11 @@ def editAccount(request):
     return JsonResponse(data)
 
 def deleteAccount(request):
-    if request.method == "POST":
-        delete_account = dbAccount.objects.get(pk=request.POST['account_id'])
+    delete_account = dbAccount.objects.get(pk=request.POST['account_id'])
+    if (dbEntry.objects.filter(fromAccount=delete_account)|dbEntry.objects.filter(toAccount=delete_account)).exists():
+        delete_account.is_active=False
+        delete_account.save()
+    else:
         delete_account.delete()
     data = {
         'message': 'delete account successful'
@@ -431,14 +429,50 @@ def signin(request):
         email=request.POST.get("email")
         username=request.POST.get("username")
         password=request.POST.get("password")
-        user=authenticate(request,username=username,password=password)
+        print(email)
+        print(username)
+        print(password)
+        user=authenticate(request,email=email,password=password)
+        print(user)
+        # user=authenticate(request,username=username,password=password)
         if user is not None:
             login(request,user)
+            data = {
+                "message":"Login successful",
+                "message_type":'success'
+            }
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "walletapp/login.html", {"message":"Invalid Credentials"})
-    return render(request, "walletapp/login.html", {"message":'message'})
+            data = {
+                "message":"Invalid Credentials",
+                "message_type":'danger'
+            }
+            return render(request, "walletapp/login.html", data)
+    return render(request, "walletapp/login.html")
 
 def signout(request):
     logout(request)
-    return render(request, "walletapp/login.html", {"message":"Successfully logged out."})
+    data = {
+        'message':'Successfully logged out.',
+        'message_type':'success'
+    }
+    return render(request, "walletapp/login.html", data)
+
+def register(request):
+    reg_email = request.GET.get('reg_email')
+    # reg_first_name = request.GET.get('reg_first_name')
+    # reg_last_name = request.GET.get('reg_last_name')
+    reg_password = request.GET.get('reg_password')
+    reg_password2 = request.GET.get('reg_password2')
+    reg_dob = request.GET.get('reg_dob')
+    newUser = MyUser.objects.create_user(email=reg_email,date_of_birth=reg_dob,password=reg_password)
+    newUser.save()
+    data = {
+        'reg_email':reg_email,
+        'reg_dob':reg_dob,
+        'reg_password':reg_password,
+        'reg_password2':reg_password2,
+        # 'reg_first_name':reg_first_name,
+        # 'reg_last_name':reg_last_name,
+    }
+    return JsonResponse(data)

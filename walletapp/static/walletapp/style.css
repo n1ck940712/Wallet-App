@@ -194,5 +194,9 @@ hr{
   .chartContainer{
     height: 100%;
   }
+}
 
+.alert{
+    position: absolute;
+    width: 100%;
 }

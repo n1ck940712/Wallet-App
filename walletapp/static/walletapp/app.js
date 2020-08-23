@@ -1,5 +1,9 @@
 $(document).ready(function (){
 
+    $('.alert').alert()
+    setTimeout(function(){
+        $('.alert').alert('close')},3000
+    )
 
 // transaction page
     if (window.location.pathname=='/') {loadEntry()}
@@ -36,10 +40,6 @@ $(document).ready(function (){
         $('.filterdateEnd').val(picker.endDate.format('YYYY-MM-DD'))
     });
 
-    $('.submitNewEntry').click(function(){ // confirm new entry
-        addEntry()
-    })
-
     $('.clearFilterButton').click(function(){ // clear filter
         $('.filterType').val('')
         $('.filterNote').val('')
@@ -62,28 +62,16 @@ $(document).ready(function (){
 // setting page
 
     if (window.location.pathname=='/settings') {loadSettings()}
-    $('.addNewCategory').click(function(){ //add new category
-        addCategory()
-    })
-
-    $('.editCategoryConfirm').click(function(){
-        editCategoryConfirm()
-    })
-
     $('.deleteCategoryConfirm').click(function(){
         deleteCategory()
     })
 
-    $('.addAccountConfirm').click(function(){
-        addAccount()
-    })
-
-    $('.editAccountConfirm').click(function(){
-        editAccount()
-    })
-
     $('.deleteAccountConfirm').click(function(){
         deleteAccount()
+    })
+
+    $('.regButton').click(function(){
+        regSubmit()
     })
 
 // overview page
@@ -205,8 +193,43 @@ $(document).ready(function (){
 // functions /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-function loadOverview(){
 
+function test(){
+    console.log('formsubmit')
+}
+
+function regSubmit(){
+    var reg_email = $('.reg_email').val()
+    var reg_first_name = $('.reg_first_name').val()
+    var reg_last_name = $('.reg_last_name').val()
+    var reg_password = $('.reg_password').val()
+    var reg_password2 = $('.reg_password2').val()
+    var reg_dob = $('.reg_dob').val()
+    $.ajax({
+        type: 'GET',
+        url: 'register',
+        data: {
+            "reg_email": reg_email,
+            // "reg_first_name": reg_first_name,
+            // "reg_last_name": reg_last_name,
+            'reg_password': reg_password,
+            'reg_password2': reg_password2,
+            'reg_dob': reg_dob,
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        complete: function(){
+            $('.loadingAnim').hide()
+        },
+        success: function(data) {
+            console.log(data)
+        }
+    })
+        
+}
+
+function loadOverview(){
     getAccountOverview()
 }
 
@@ -298,7 +321,7 @@ function getAccountOverview(){
 
             //update income chart
             for (var item in income_category) {
-                incomeChart.data.labels.push(lookUpCategory(expense_category[item].category, category));
+                incomeChart.data.labels.push(lookUpCategory(income_category[item].category, category));
                 incomeChart.data.datasets[0].data.push(Math.abs(income_category[item].total));
             }
             incomeChart.update();
@@ -582,28 +605,28 @@ function editEntry(entry_id){
                     <div class='form-group row'>
                         <label for="edit_entry_amount" class="col-4 col-form-label">Amount</label>
                         <div class="col-8">
-                            <input class="form-control edit_entry_amount" value="${amount}">
+                            <input class="form-control edit_entry_amount" value="${amount}" required>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_from" class="col-4 col-form-label">Account</label>
                         <div class="col-8">
-                            <select class="form-control edit_entry_from"></select>
+                            <select class="form-control edit_entry_from" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_category" class="col-4 col-form-label">Category</label>
                         <div class="col-8">
-                            <select class="form-control edit_entry_category"></select>
+                            <select class="form-control edit_entry_category" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_note" class="col-4 col-form-label">Note</label>
                         <div class="col-8">
-                            <input class="form-control edit_entry_note" value="${entry_note}">
+                            <input class="form-control edit_entry_note" value="${entry_note}" required>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
                 `)
                 for (var i in accounts) {
                     var x = accounts[i].pk
@@ -639,28 +662,28 @@ function editEntry(entry_id){
                     <div class='form-group row'>
                         <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
                         <div class="col-sm-8">
-                            <input class="form-control edit_entry_amount" value="${amount}">
+                            <input class="form-control edit_entry_amount" value="${amount}" required>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_to" class="col-sm-4 col-form-label">Account</label>
                         <div class="col-sm-8">
-                            <select class="form-control edit_entry_to"></select>
+                            <select class="form-control edit_entry_to" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
                         <div class="col-sm-8">
-                            <select class="form-control edit_entry_category"></select>
+                            <select class="form-control edit_entry_category" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
                         <div class="col-sm-8">
-                            <input class="form-control edit_entry_note" type="text" value="${entry_note}">
+                            <input class="form-control edit_entry_note" type="text" value="${entry_note}" required>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
                 `)
                 for (var i in accounts) {
                     var x = accounts[i].pk
@@ -695,34 +718,34 @@ function editEntry(entry_id){
                     <div class='form-group row'>
                         <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
                         <div class="col-sm-8">
-                            <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                            <input class="form-control edit_entry_amount" type="text" value="${amount}" required>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_from" class="col-sm-4 col-form-label">From</label>
                         <div class="col-sm-8">
-                            <select class="form-control edit_entry_from"></select>
+                            <select class="form-control edit_entry_from" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_to" class="col-sm-4 col-form-label">To</label>
                         <div class="col-sm-8">
-                            <select class="form-control edit_entry_to"></select>
+                            <select class="form-control edit_entry_to" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
                         <div class="col-sm-8">
-                            <select class="form-control edit_entry_category"></select>
+                            <select class="form-control edit_entry_category" required></select>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
                         <div class="col-sm-8">
-                            <input class="form-control edit_entry_note" value="${entry_note}">
+                            <input class="form-control edit_entry_note" value="${entry_note}" required>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
                 `)
                 for (var i in accounts) {
                     var x = accounts[i].pk
@@ -770,13 +793,13 @@ function editEntry(entry_id){
                     <div class='form-group row'>
                         <label for="edit_entry_amount" class="col-sm-4 col-form-label">Amount</label>
                         <div class="col-sm-8">
-                            <input class="form-control edit_entry_amount" type="text" value="${amount}">
+                            <input class="form-control edit_entry_amount" type="text" value="${amount}" required>
                         </div>
                     </div>
                     <div class='form-group row'>
                         <label for="edit_entry_category" class="col-sm-4 col-form-label">Account</label>
                         <div class="col-sm-8">
-                            <select class="form-control edit_entry_to">
+                            <select class="form-control edit_entry_to" required>
                                 <option selected value='${to_account}'>${x}</option>
                             </select>
                         </div>
@@ -784,10 +807,10 @@ function editEntry(entry_id){
                     <div class='form-group row'>
                         <label for="edit_entry_note" class="col-sm-4 col-form-label">Note</label>
                         <div class="col-sm-8">
-                            <input class="form-control edit_entry_note" value="${entry_note}">
+                            <input class="form-control edit_entry_note" value="${entry_note}" required>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="editEntryConfirm()">Confirm</button>
+                    <button type="submit" class="btn btn-primary">Confirm</button>
                 `)
             }
         }
@@ -795,7 +818,6 @@ function editEntry(entry_id){
 }
 
 function editEntryConfirm(){
-    console.log($('.edit_entry_to').value)
     $.ajax({
         type: 'POST',
         url: 'editEntryConfirm',

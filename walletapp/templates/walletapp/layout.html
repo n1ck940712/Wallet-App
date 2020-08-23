@@ -39,7 +39,7 @@
             </div>
         </nav>
         {% if message %}
-        <div class="alert alert-success" role="alert">
+        <div class="alert alert-{{message_type}} fade show ">
             {{message}}
         </div>
         {% endif %}
