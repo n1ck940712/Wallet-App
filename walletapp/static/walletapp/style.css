@@ -4,6 +4,12 @@ html,body{
     height: 100%;
     overflow: hidden;
 }
+.loginBody{
+    position: relative;
+    background-image:url('/static/walletapp/images/background.JPG');
+    background-repeat:no-repeat;
+    background-size:cover;
+}
 
 .form-signin{
     width: 100%;
@@ -108,7 +114,7 @@ html,body{
     margin: 5px;
 }
 
-.categoryContainer, .accountContainer{
+.categoryContainer, .accountContainer, .exportCont{
     margin: 1vh;
     margin-top: 5px;
     border-radius: 5px;
@@ -150,12 +156,9 @@ html,body{
     height: 88vh;
 }
 
-.modal{
-    top: 15vh;
-}
-
 .categoryContainerHeader,
-.accountContainerHeader{
+.accountContainerHeader, 
+.exportContHeader{
     justify-content: space-between;
     padding: 0px 5px 0px 6px;
     display:flex;
@@ -199,4 +202,35 @@ hr{
 .alert{
     position: absolute;
     width: 100%;
+    z-index: 1200;
+}
+
+.form-signin{
+    border-radius: 10px;
+    background-color: white;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.logoText{
+    margin-top: 45px;
+    font-size: 50px;
+    color: white;
+}
+
+
+.modal{
+    top: 15vh;
+}
+.modal-content{
+    border-radius: 10px;
+    
+}
+@media (min-width: 576px) {
+    .modal-dialog {
+      width: 400px; 
+    }
 }

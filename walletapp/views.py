@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from .models import dbEntry, dbCategory, dbAccount, dbAccountType, MyUser
@@ -18,32 +18,23 @@ if superuser.count() == 0:
 # load pages
 def index(request):
     if not request.user.is_authenticated:
-        return render(request, "walletapp/login.html", {"message": "Login first"})
-    #new User create default category and account
-    if not dbAccount.objects.filter(accountUser=request.user).exists():
-        print('no account')
-        init_account = dbAccount(accountUser=request.user, accountName='wallet', accountBalance=0, accountType = 'cash')
-        init_account.save()
-        account_first_entry = dbEntry(entryUser=request.user, amount=0, fromAccount=init_account, toAccount=init_account, entryNote='new account', type='system')
-        account_first_entry.save()
-    if not dbCategory.objects.filter(categoryUser=request.user).exists():
-        print('no category')
-        init_category = dbCategory(categoryUser=request.user, categoryName='income', categoryType='income')
-        init_category.save()
-        init_category = dbCategory(categoryUser=request.user, categoryName='expense', categoryType='expense')
-        init_category.save()
-    context = {
+        data = {
+            'message': 'Login first.',
+            'message_type': 'danger',
+        }
+        return redirect("signinfirst")
+    data = {
     'user': request.user,
     'accounts': dbAccount.objects.filter(accountUser=request.user).order_by('accountName'),
     'expense_category': dbCategory.objects.filter(categoryUser=request.user, categoryType='expense').order_by('categoryName'),
     'income_category': dbCategory.objects.filter(categoryUser=request.user, categoryType='income').order_by('categoryName'),
     }
-    return render(request, "walletapp/index.html", context)
+    return render(request, "walletapp/index.html", data)
 
 def settings(request):
     context = {
     "user": request.user,
-    "accountTypes": dbAccount.objects.distinct('accountType').order_by('accountType'),
+    "accountTypes": dbAccountType.objects.all(),
     "message": None,
     }
     return render(request, "walletapp/settings.html", context)
@@ -400,7 +391,7 @@ def editAccount(request):
         edit_account_name = request.POST.get('edit_account_name')
         if edit_account.accountBalance != edit_account_balance:
             balanceDiff = float(edit_account_balance) - float(edit_account.accountBalance)
-            balanceDiffEntry = dbEntry(amount=balanceDiff, fromAccount=edit_account, toAccount=edit_account, entryNote='edit balance', type='system')
+            balanceDiffEntry = dbEntry(entryUser=request.user, amount=balanceDiff, fromAccount=edit_account, toAccount=edit_account, entryNote='edit balance', type='system')
             balanceDiffEntry.save()
         edit_account.accountName = edit_account_name
         edit_account.accountBalance = edit_account_balance
@@ -450,6 +441,14 @@ def signin(request):
             return render(request, "walletapp/login.html", data)
     return render(request, "walletapp/login.html")
 
+def signinfirst(request):
+    data = {
+        'message': 'Login first.',
+        'message_type': 'danger',
+        
+    }
+    return render(request, 'walletapp/login.html', data)
+
 def signout(request):
     logout(request)
     data = {
@@ -465,14 +464,63 @@ def register(request):
     reg_password = request.GET.get('reg_password')
     reg_password2 = request.GET.get('reg_password2')
     reg_dob = request.GET.get('reg_dob')
-    newUser = MyUser.objects.create_user(email=reg_email,date_of_birth=reg_dob,password=reg_password)
-    newUser.save()
+    if not MyUser.objects.filter(email=reg_email).exists():
+        if reg_password and reg_password2 and reg_password == reg_password2:
+            newUser = MyUser.objects.create_user(email=reg_email,date_of_birth=reg_dob,password=reg_password)
+            newUser.save()
+            #new User create default category and account
+            createdUser = MyUser.objects.get(email=reg_email)
+            init_account = dbAccount(accountUser=createdUser, accountName='wallet', accountBalance=0, accountType = 'cash')
+            init_account.save()
+            account_first_entry = dbEntry(entryUser=createdUser, amount=0, fromAccount=init_account, toAccount=init_account, entryNote='new account', type='system')
+            account_first_entry.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='salary', categoryType='income')
+            init_category.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='others', categoryType='income')
+            init_category.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='food', categoryType='expense')
+            init_category.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='transport', categoryType='expense')
+            init_category.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='shopping', categoryType='expense')
+            init_category.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='bills', categoryType='expense')
+            init_category.save()
+            init_category = dbCategory(categoryUser=createdUser, categoryName='others', categoryType='expense')
+            init_category.save()
+            data = {
+                'message': 'Registration successful. You can log in now.',
+                'message_type': 'success',
+                # 'reg_email':reg_email,
+                # 'reg_dob':reg_dob,
+                # 'reg_password':reg_password,
+                # 'reg_password2':reg_password2,
+                # 'reg_first_name':reg_first_name,
+                # 'reg_last_name':reg_last_name,
+            }
+        else:
+            data = {
+                'message': 'Password does not match. Please try again',
+                'message_type': 'danger',
+            }
+    else:
+        data = {
+                'message': 'Email address is already registered.',
+                'message_type': 'danger',
+        }
+
+    return JsonResponse(data)
+
+# export
+def export(request):
+    export_date_start = request.GET.get('exportDateStart')
+    export_date_end = request.GET.get('exportDateEnd')
+    transaction = dbEntry.objects.filter(entryUser=request.user, entryDate__range=[export_date_start, export_date_end])
+    account = dbAccount.objects.filter(accountUser=request.user)
+    category = dbCategory.objects.filter(categoryUser=request.user)
     data = {
-        'reg_email':reg_email,
-        'reg_dob':reg_dob,
-        'reg_password':reg_password,
-        'reg_password2':reg_password2,
-        # 'reg_first_name':reg_first_name,
-        # 'reg_last_name':reg_last_name,
+        'transaction': serializers.serialize('json', transaction),
+        'account': serializers.serialize('json', account),
+        'category': serializers.serialize('json', category),
     }
     return JsonResponse(data)

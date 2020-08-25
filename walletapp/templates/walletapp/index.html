@@ -93,7 +93,6 @@
                     <button class="tabButton btn btn-primary btn-md" onclick="openTab(event, 'transferForm')">Transfer</button>
                 </div>
                 <form class="tabContent incomeForm text-center" action="javascript:addEntry();">
-                    <!-- <input type="hidden" class="new_entry_from" name="new_entry_from" value="Null"> -->
                     <input type="hidden" class="new_entry_type">
                     <div class="form-group">
                         <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
@@ -122,13 +121,13 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Add</button>
                 </form>
-                <form class="tabContent expenseForm text-center" action="javascript:addEntry();>
+                <form class="tabContent expenseForm text-center" action="javascript:addEntry();">
                     <input type="hidden" class="new_entry_type">
                     <div class="form-group">
-                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off">
+                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
                     </div>
                     <div class="form-group">
-                        <select class="form-control new_entry_from">
+                        <select class="form-control new_entry_from" required>
                             <option value="" selected disabled>Account</option>
                             {% for item in accounts %}
                             <option value="{{item.pk}}">{{item.accountName|title}}</option>
@@ -136,7 +135,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <select class="form-control new_entry_category">
+                        <select class="form-control new_entry_category" required>
                             <option value="" selected disabled>Category</option>
                             {% for item in expense_category %}
                             <option value="{{item.pk}}">{{item.categoryName|title}}</option>
@@ -149,16 +148,16 @@
                     <div class="form-group">
                         <input type="text" class="form-control new_entry_note" placeholder="Note" autocomplete="off">
                     </div>
-                    <button type="button" class="btn btn-primary">Add</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
                 </form>
-                <form class="tabContent transferForm text-center" action="javascript:addEntry();>
+                <form class="tabContent transferForm text-center" action="javascript:addEntry();">
                     <input type="hidden" class="new_entry_category" name="new_entry_category" value="transfer">
                     <input type="hidden" class="new_entry_type" name="new_entry_type" value="transfer">
                     <div class="form-group">
-                        <input type="text" class="form-control new_entry_amount" name="new_entry_amount" placeholder="Amount" autocomplete="off">
+                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
                     </div>
                     <div class="form-group">
-                        <select class="form-control new_entry_from" name="new_entry_from">
+                        <select class="form-control new_entry_from" required>
                             <option value="" selected disabled>Select origin account</option>
                             {% for item in accounts %}
                             <option value="{{item.pk}}">{{item.accountName|title}}</option>
@@ -166,7 +165,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <select class="form-control new_entry_to" name="new_entry_to">
+                        <select class="form-control new_entry_to" required>
                             <option value="" selected disabled>Select destination account</option>
                             {% for item in accounts %}
                             <option value="{{item.pk}}">{{item.accountName|title}}</option>
@@ -174,12 +173,12 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <input type="date" class="form-control new_entry_date" name="new_entry_date">
+                        <input type="date" class="form-control new_entry_date" required>
                     </div>
                     <div class="form-group">
-                        <input type="text" class="form-control new_entry_note" name="new_entry_note" placeholder="Note" autocomplete="off">
+                        <input type="text" class="form-control new_entry_note" placeholder="Note" autocomplete="off">
                     </div>
-                    <button type="button" class="btn btn-primary">Add</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
                 </form>
             </div>
         </div>

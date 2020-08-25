@@ -61,17 +61,25 @@ $(document).ready(function (){
 
 // setting page
 
-    if (window.location.pathname=='/settings') {loadSettings()}
+    if (window.location.pathname=='/settings') {
+        loadSettings()
+        $('.exportDate').daterangepicker({
+            "opens": "left"
+        });
+        $('.exportDate').on('apply.daterangepicker', function(ev, picker) {
+            $('.exportDateStart').val(picker.startDate.format('YYYY-MM-DD'))
+            $('.exportDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
+            if (window.location.pathname=='/overview'){
+                loadOverview()
+            }
+        });
+    }
     $('.deleteCategoryConfirm').click(function(){
         deleteCategory()
     })
 
     $('.deleteAccountConfirm').click(function(){
         deleteAccount()
-    })
-
-    $('.regButton').click(function(){
-        regSubmit()
     })
 
 // overview page
@@ -193,6 +201,81 @@ $(document).ready(function (){
 // functions /////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
+function startExport(){
+    var exportDateStart = $('.exportDateStart').val()
+    var exportDateEnd = $('.exportDateEnd').val()
+    $.ajax({
+        type: 'GET',
+        url: 'export',
+        data: {
+            'exportDateStart': exportDateStart,
+            'exportDateEnd': exportDateEnd,
+        },
+        beforeSend: function(){
+            $('.loadingAnim').show()
+        },
+        complete: function(){
+            $('.loadingAnim').hide()
+        },
+        success: function(data) {
+            var transaction = JSON.parse(data.transaction)
+            var account = JSON.parse(data.account)
+            var category = JSON.parse(data.category)
+            var csvString = converToCsv(transaction,account,category)
+            var blob = new Blob([csvString]);
+            if (window.navigator.msSaveOrOpenBlob) 
+                window.navigator.msSaveBlob(blob, `${exportDateStart} to ${exportDateEnd}.csv`);
+            else
+            {
+                var a = window.document.createElement("a");
+                a.href = window.URL.createObjectURL(blob, {type: "text/plain"});
+                a.download = `${exportDateStart} to ${exportDateEnd}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }            
+        }
+    })
+}
+
+function converToCsv(transaction,account,category){
+    var str = '';
+    var line = '';
+    for (var index in transaction[0].fields) {
+        if (line != '') line += ','
+        line += index;
+    }
+    str += line + '\r\n';
+
+    for (var i = 0; i < transaction.length; i++) {
+        var line = '';
+        for (var index in transaction[i].fields) {
+            if (line != '') line += ','
+            if  (index == 'category'){
+                for (var x in category) {
+                    if (category[x].pk == transaction[i].fields[index]) {
+                        line += category[x].fields.categoryName
+                    }
+                }
+            }
+            else if (index == 'fromAccount' || index == 'toAccount'){
+                for (var x in account) {
+                    if (account[x].pk == transaction[i].fields[index]) {
+                        line += account[x].fields.accountName
+                    }
+                }
+            }
+            else {
+                line += transaction[i].fields[index];
+            }
+            if (!transaction[i].fields[index] && transaction[i].fields[index] != '0' ){
+                line += 'N/A'
+            }
+        }
+        str += line + '\r\n';
+    }
+    return str;
+}
 
 function test(){
     console.log('formsubmit')
@@ -223,7 +306,22 @@ function regSubmit(){
             $('.loadingAnim').hide()
         },
         success: function(data) {
-            console.log(data)
+            if (data.message_type == 'success') {
+                hideModal()
+            }
+            else {
+                $('.reg_password').val('')
+                $('.reg_password2').val('')
+            }
+            $('.alertCont').append(`
+                <div class="alert alert-${data.message_type} fade show text-center">
+                ${data.message}
+                </div>
+            `)
+            $('.alert').alert()
+            setTimeout(function(){
+                $('.alert').alert('close')},3000
+            )
         }
     })
         
@@ -409,15 +507,13 @@ function accountDetail(account_id, account_name, account_balance, account_type){
 
 // category
 function addCategory(){
+    console.log('addcategory')
     var add_category_name = $('.add_category_name').val()
     var add_category_type = $('.add_category_type').val()
     if (!/\S/.test(add_category_name) || add_category_name.charAt(0)==' ') {
         console.log('Invalid category name. Try again.')
         $('.add_category_name').val('')
         $('.add_category_type').val('')
-    }
-    else if (!add_category_type) {
-        console.log('Choose a category type.')
     }
     else {
         $.ajax({
@@ -491,6 +587,19 @@ function categoryDetail(category_id, category_name){
     `)
 }
 
+// function toggleEditCategory(){
+//     if  ($('.editCateToggBut').html() === 'Edit') {
+//         $('.editCateToggBut').html('Cancel')
+//         $('.editCateToggBut').addClass('btn-danger')
+//         $('.editCateToggBut').removeClass('btn-primary')
+//     } else {
+//         $('.editCateToggBut').html('Edit')
+//         $('.editCateToggBut').removeClass('btn-danger')
+//         $('.editCateToggBut ').addClass('btn-primary')
+//     }
+//     $('.showAddCateBut').toggle()
+// }
+
 //loadsettings
 function loadSettings(){
     $.ajax({
@@ -504,7 +613,6 @@ function loadSettings(){
             $('.loadingAnim').hide()
         },
         success: function(data){
-            console.log(data)
             var category = JSON.parse(data.category)
             var account = JSON.parse(data.account)
             $('.accountContainerBody').html('')
@@ -513,7 +621,7 @@ function loadSettings(){
                 var categorySub = $(`
                     <div class="categorySub">
                         <div>${category[i].fields.categoryName}</div>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target=".categoryModal" onclick="categoryDetail('${category[i].pk}', '${category[i].fields.categoryName}')">Edit</button>
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target=".categoryModal" onclick="categoryDetail('${category[i].pk}', '${category[i].fields.categoryName}')">Edit</button>
                     </div>
                 `)
                 if (category[i].fields.categoryType=='expense') {
@@ -522,6 +630,22 @@ function loadSettings(){
                 if (category[i].fields.categoryType=='income') {
                     $('.categoryIncome').append(categorySub)
                 }
+            }
+            if ($('.categoryIncome > div').length < 1) {
+                var noCategory = $(`
+                    <div class="categorySub">
+                        <div>No category</div>
+                    </div>
+                `)
+                $('.categoryIncome').append(noCategory)
+            }
+            if ($('.categoryExpense > div').length < 1) {
+                var noCategory = $(`
+                    <div class="categorySub">
+                        <div>No category</div>
+                    </div>
+                `)
+                $('.categoryExpense').append(noCategory)
             }
             for (var i in account) {
                 var accountSub = $(`
@@ -1095,6 +1219,7 @@ function lookUpAccount(pk, account){
         }
     }
 }
+
 function lookUpCategory(pk, category){
     for (var i in category) {
         if (category[i].pk == pk) {

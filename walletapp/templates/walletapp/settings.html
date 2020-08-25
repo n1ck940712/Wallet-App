@@ -21,12 +21,19 @@
                 <hr>
                 <div class="accountContainerBody"></div>
             </div>
+            <div class="exportCont" >
+                <div class="exportContHeader">
+                    <h5>Export Entry</h5>
+                </div>
+                <hr>
+                <button class="btn btn-primary btn-sm" data-toggle="modal" data-target='.exportModal' >Export</button>
+            </div>
         </div>
         <div class="col-md-6" style="padding:0;">
             <div class="categoryContainer">
                 <div class="categoryContainerHeader">
                     <h5>Category</h5>
-                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".addCategoryModal" name="button">Add</button>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target=".addCategoryModal">Add</button>
                 </div>
                 <hr>
                 <h6>Income</h6>
@@ -66,7 +73,7 @@
     </div>
 </div>
 
-<!-- edit or delete category/////////////////////////////////////////////////// -->
+<!-- edit or delete category -->
 <div class="modal fade categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -155,5 +162,26 @@
     </div>
 </div>
 
+<!-- export -->
+<div class="modal fade exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title exportModalLabel">Export</h5>
+                <button class="close" data-dismiss="modal" aria-label="Close" >
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form class="modal-body text-center" action="javascript:startExport();">
+                <input type="hidden" class="exportDateStart">
+                <input type="hidden" class="exportDateEnd">
+                <div class="form-group">
+                    <input type="text" class="form-control exportDate" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Export</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

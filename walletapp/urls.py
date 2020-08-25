@@ -6,8 +6,10 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('overview', views.overview, name='overview'),
     path('settings', views.settings, name='settings'),
+    path('export', views.export, name='export'),
     # signin signout
     path('signin', views.signin, name='signin'),
+    path('signinfirst', views.signinfirst, name='signinfirst'),
     path('signout', views.signout, name='signout'),
     path('register', views.register, name='register'),
     # account graph data

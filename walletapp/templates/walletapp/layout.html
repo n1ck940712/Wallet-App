@@ -38,9 +38,11 @@
 
             </div>
         </nav>
-        {% if message %}
-        <div class="alert alert-{{message_type}} fade show ">
-            {{message}}
+        <div class="alertCont">
+            {% if message %}
+            <div class="alert alert-{{message_type}} fade show text-center">
+                {{message}}
+            </div>
         </div>
         {% endif %}
         {% block body %}

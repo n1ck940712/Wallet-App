@@ -1,57 +1,92 @@
-{% extends  'walletapp/layout.html' %}
-{% block title %}Login{% endblock %}
-{% block body %}
-<form class="form-signin text-center" action="signin" method="post">
-    {% csrf_token %}
-    <img class="mb-4" src="https://getbootstrap.com/docs/4.0/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">
-    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-    <label for="inputEmail" class="sr-only">Email address</label>
-    <input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" autofocus>
-    <label for="inputPassword" class="sr-only">Password</label>
-    <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
-    <div class="checkbox mb-3">
-        <label>
-            <input type="checkbox" value="remember-me"> Remember me
-        </label>
-    </div>
-    <button class="btn btn-lg btn-primary btn-block loginButton" type="submit">Sign in</button>
-    <p>Looking to <a href="#" data-toggle="modal" data-target=".regModal">create an account </a>?</p>
-    <p class="mt-5 mb-3 text-muted">&copy; 2017-2018</p>
-</form>
-
-<div class="modal fade regModal" tabindex="-1" role="dialog" aria-labelledby="regModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content text-center">
-            <div class="modal-header">
-                <h5 class="modal-title regModalLabel">Register</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="hideModal()">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        {% load static %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'walletapp/bootstrap-4.3.1-dist/css/bootstrap.css' %}">
+        <link rel="stylesheet" href="{% static 'walletapp/style.css' %}">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <script src="{% static 'walletapp/jquery-3.5.1/jquery.min.js' %}" charset="utf-8"></script>
+        <script src="{% static 'walletapp/bootstrap-4.3.1-dist/js/bootstrap.min.js' %}" charset="utf-8"></script>
+        <script src="{% static 'walletapp/app.js' %}" charset="utf-8"></script>
+        <title>{% block title %}{% endblock %}</title>
+    </head>
+    <body class="loginBody">
+        <div class="alertCont">
+            {% if message %}
+            <div class="alert alert-{{message_type}} fade show text-center">
+                {{message}}
             </div>
-            <div class="modal-body" style="margin:0 auto;">
-                <div class="text-center" style="margin:0px 0px 10px 0px">
-                    <!-- <div class="form-group">
-                        <input class="form-control reg_first_name" placeholder="First name">
+        </div>
+        {% endif %}
+        <p class="logoText text-center">WALLET</p>
+        <form class="form-signin text-center" action="signin" method="post">
+            {% csrf_token %}
+            <h1 class="h3 mb-3 font-weight-normal">Login</h1>
+            <div class="input-group form-group">
+                <div class="input-group-prepend">
+                    <div class="input-group-text"><i class="material-icons">&#xe0be;</i></div>
+                </div>
+                <input type="email" name="email" class="form-control" placeholder="Email address" autofocus required>
+            </div>
+            <div class="input-group form-group">
+                <div class="input-group-prepend">
+                    <div class="input-group-text"><i class="material-icons">&#xe897;</i></div>
+                </div>
+                <input type="password" name="password" class="form-control" placeholder="Password" required>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block loginButton form-group" type="submit">Login</button>
+                    <div class="checkbox mb-3">
+                        <label>
+                            <input type="checkbox" value="remember-me"> Remember me
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <input class="form-control reg_last_name" placeholder="Last name">
-                    </div> -->
-                    <div class="form-group">
-                        <input type="email" class="form-control reg_email" placeholder="Email address">
+            <p>Looking to <a href="#" data-toggle="modal" data-target=".regModal"><strong>create an account </strong></a>?</p>
+        </form>
+        <p class="mt-5 mb-3 text-muted" style="bottom:0;position:absolute;margin:0 auto;">Wallet created by Nicholas Hoo</p>
+
+        <div class="modal fade regModal" tabindex="-1" role="dialog" aria-labelledby="regModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content text-center">
+                    <div class="modal-header">
+                        <h5 class="modal-title regModalLabel">Register</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="hideModal()">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <input type="date" class="form-control reg_dob">
+                    <div class="modal-body" style="margin:0 auto;">
+                        <form class="text-center" style="margin:0px 0px 10px 0px" action="javascript:regSubmit();">
+                            <!-- <div class="form-group">
+                                <input class="form-control reg_first_name" placeholder="First name">
+                            </div>
+                            <div class="form-group">
+                                <input class="form-control reg_last_name" placeholder="Last name">
+                            </div> -->
+                            <div class="form-group">
+                                <input type="email" class="form-control reg_email" placeholder="Email address" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="date" class="form-control reg_dob" required >
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control reg_password" placeholder="Password" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control reg_password2" placeholder="Retype password" required>
+                            </div>
+                            <button type="submit" class="btn btn-lg btn-primary btn-block">Register</button>
+                        </form>
                     </div>
-                    <div class="form-group">
-                        <input type="password" class="form-control reg_password" placeholder="Password">
-                    </div>
-                    <div class="form-group">
-                        <input type="password" class="form-control reg_password2" placeholder="Retype password">
-                    </div>
-                    <button class="regButton btn btn-primary" style="margin:0px 15px 0px 15px">Register</button>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-{% endblock %}
+
+        <div class="loadingAnim" style="text-align:center;display:hidden;">
+            <div class="loadingAnimSub col-4">
+                <img src="{% static 'walletapp/images/loading.gif' %}"/>
+                <p>Please Wait</p>
+            </div>
+        </div>
+    </body>
+</html>
