@@ -6,24 +6,36 @@ $(document).ready(function (){
     )
 
 // transaction page
-    if (window.location.pathname=='/') {loadEntry()}
+    if (window.location.pathname=='/') {
+        $('.filterDateStart').val(moment().startOf('month').format('YYYY-MM-DD'))
+        $('.filterDateEnd').val(moment().endOf('month').format('YYYY-MM-DD'))
+        loadEntry()}
 
     $('.filterButton').click(function(){
         loadEntry()
     })
 
     $('.filterDate').daterangepicker({
-        "opens": "left"
+        opens: "right",
+        startDate: moment().startOf('month'),
+        endDate: moment().endOf('month'),
+        ranges: {
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+         },
+        showDropdowns: true,
+        alwaysShowCalendars: true,
     });
 
-    $('.filterDate').val('All Time')
+    // $('.filterDate').val('All Time')
 
     $('.filterDate').on('cancel.daterangepicker', function(ev, picker) {
         $('.filterDate').val('All Time');
         $('.filterDateStart').val('')
         $('.filterDateEnd').val('')
         if (window.location.pathname=='/overview'){
-            console.log('clear')
             loadOverview()
         }
     });
@@ -31,7 +43,6 @@ $(document).ready(function (){
         $('.filterDateStart').val(picker.startDate.format('YYYY-MM-DD'))
         $('.filterDateEnd').val(picker.endDate.format('YYYY-MM-DD'))
         if (window.location.pathname=='/overview'){
-            console.log('apply')
             loadOverview()
         }
     });
@@ -85,6 +96,8 @@ $(document).ready(function (){
 // overview page
     if (window.location.pathname=='/overview') {
         $('.overviewContainer').children(':first').addClass('selectedAccount').removeClass('notSelectedAccount')//select first account
+        $('.filterDateStart').val(moment().startOf('month').format('YYYY-MM-DD'))
+        $('.filterDateEnd').val(moment().endOf('month').format('YYYY-MM-DD'))
         loadOverview()
         var color = Chart.helpers.color;
         var expenseChartCanvas = document.getElementById('expenseChart').getContext('2d'); // init expense chart
@@ -187,6 +200,7 @@ $(document).ready(function (){
                 // }
             }
         });
+        
     }
     $('.accountSelect').change(function(){
         getAccountOverview()
@@ -277,10 +291,6 @@ function converToCsv(transaction,account,category){
     return str;
 }
 
-function test(){
-    console.log('formsubmit')
-}
-
 function regSubmit(){
     var reg_email = $('.reg_email').val()
     var reg_first_name = $('.reg_first_name').val()
@@ -334,8 +344,6 @@ function loadOverview(){
 function getAccountOverview(){
     var filter_start_date = $('.filterDateStart').val()
     var filter_end_date = $('.filterDateEnd').val()
-    var filter_end_date_plus1 = new Date(filter_end_date)
-    filter_end_date_plus1.setDate(filter_end_date_plus1.getDate()+1)
     $.ajax({
         type: 'GET',
         url: 'getAccountOverview',
@@ -343,7 +351,6 @@ function getAccountOverview(){
             "selected_account": $('.accountSelect').val(),
             'filter_date_start': filter_start_date,
             'filter_date_end': filter_end_date,
-            'filter_date_end+1': convertDate(filter_end_date_plus1),
         },
         beforeSend: function(){
             $('.loadingAnim').show()
@@ -352,7 +359,6 @@ function getAccountOverview(){
             $('.loadingAnim').hide()
         },
         success: function(data) {
-            console.log(data)
             var category = JSON.parse(data.category)
             var expense_category = data.expense_category
             var income_category = data.income_category
@@ -363,52 +369,15 @@ function getAccountOverview(){
             $('.totalExpense').text("$ "+data.total_expense.toFixed(2))
             $('.totalChange').text("$ "+data.total_change.toFixed(2))
             $('.totalTransfer').text("$ "+data.total_transfer.toFixed(2))
-
             removeData(balanceChart)
             removeData(expenseChart)
             removeData(incomeChart)
 
-            // update account balance chart
-            var keys = Object.keys(daily_change)
-            var array_last_item = keys.length-1
-
-            balanceChart.data.datasets[0].data.push(latest_balance) //plot first data point
-            var today_date = convertDate(new Date())
-            if (filter_end_date !='') {
-                if (filter_end_date > today_date) {
-                    filter_end_date = today_date
-                    if (keys[0] != filter_end_date) {
-                        balanceChart.data.labels.push(filter_end_date)
-                        balanceChart.data.datasets[0].data.push(latest_balance)
-                    }
-                }
-            } else {
-                if (keys[0] != today_date) {
-                    balanceChart.data.labels.push(today_date)
-                    balanceChart.data.datasets[0].data.push(latest_balance)
-                }
+            for (var i in daily_change){
+                balanceChart.data.labels.push(daily_change[i]['date'])
+                balanceChart.data.datasets[0].data.push(daily_change[i]['balance'])
             }
-            for(var keys = Object.keys(daily_change), i = 0, end = keys.length; i < end; i++) {
-                var key = keys[i], value = daily_change[key];
-                latest_balance -= daily_change[keys[i]]
-                balanceChart.data.datasets[0].data.push(latest_balance)
-                balanceChart.data.labels.push(keys[i])
-                if (i < array_last_item) {
-                    var date1 = new Date(keys[i])
-                    var date2 = new Date(keys[i+1])
-                    var day_interval =  date1.getDate() - date2.getDate()
-                    if (day_interval > 1) {
-                        date1.setDate(date1.getDate()-1)
-                        balanceChart.data.labels.push(convertDate(date1))
-                        balanceChart.data.datasets[0].data.push(latest_balance)
-                    }
-                }
-            };
-            var dateVar = new Date(keys[array_last_item])
-            dateVar.setDate(dateVar.getDate()-1)
-            balanceChart.data.labels.push(convertDate(dateVar))
             balanceChart.update()
-            // console.log(balanceChart.data)
 
             //update expense chart
             for (var item in expense_category) {
@@ -423,6 +392,27 @@ function getAccountOverview(){
                 incomeChart.data.datasets[0].data.push(Math.abs(income_category[item].total));
             }
             incomeChart.update();
+            console.log(incomeChart.data)
+            console.log(expenseChart.data)
+            Chart.plugins.register({
+                afterDraw: function (chart) {
+                    if (chart.data.labels.length === 0) {
+                        console.log('no data')
+                        // No data is present
+                        var ctx = chart.chart.ctx;
+                        var width = chart.chart.width;
+                        var height = chart.chart.height
+                        chart.clear();
+    
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = "20px 'Helvetica'";
+                        ctx.fillText('No data to display', width / 2, height / 2);
+                        ctx.restore();
+                    }
+                }
+            });
         }
     })
 }
@@ -446,7 +436,9 @@ function addAccount(){
         success: function(data){
             hideModal()
             loadSettings()
-            console.log(data)
+            $('.add_account_name').val('')
+            $('.add_account_balance').val('')
+            $('.add_account_type').val('')
         }
     })
 }
@@ -470,7 +462,6 @@ function editAccount(){
         success: function(data){
             hideModal()
             loadSettings()
-            console.log(data)
         }
     })
 }
@@ -491,7 +482,6 @@ function deleteAccount(){
         success: function(data){
             hideModal()
             loadSettings()
-            console.log(data)
         }
     })
 }
@@ -507,11 +497,8 @@ function accountDetail(account_id, account_name, account_balance, account_type){
 
 // category
 function addCategory(){
-    console.log('addcategory')
     var add_category_name = $('.add_category_name').val()
-    var add_category_type = $('.add_category_type').val()
-    if (!/\S/.test(add_category_name) || add_category_name.charAt(0)==' ') {
-        console.log('Invalid category name. Try again.')
+    if  (!checkValidInput(add_category_name)) {
         $('.add_category_name').val('')
         $('.add_category_type').val('')
     }
@@ -532,12 +519,24 @@ function addCategory(){
             success: function(data){
                 hideModal()
                 loadSettings()
-                console.log(data)
+                $('.add_category_name').val('')
+                $('.add_category_type').val('')
             },
 
         })
     }
 
+}
+
+function checkValidInput(input){
+    if (!/\S/.test(input) || input.charAt(0)==' ') {
+        $('.alertCont').append(`<div class="alert alert-danger fade show text-center">Invalid input. Please try again.</div>`)
+        $('.alert').alert()
+        setTimeout(function(){
+            $('.alert').alert('close')},3000
+        )
+        return false
+    }else return true
 }
 
 function editCategoryConfirm(){
@@ -557,7 +556,6 @@ function editCategoryConfirm(){
         success: function(data){
             hideModal()
             loadSettings()
-            console.log(data)
         }
     })
 }
@@ -575,7 +573,6 @@ function deleteCategory(){
         success: function(data){
             hideModal()
             loadSettings()
-            console.log(data)
         }
     })
 }
@@ -670,30 +667,40 @@ function addEntry(){
     var new_entry_category = $('.selectedTab').find('.new_entry_category').val()
     var new_entry_note = $('.selectedTab').find('.new_entry_note').val()
 
-    $.ajax({
-        type: 'POST',
-        url: 'addEntry',
-        headers: {
-            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
-        },
-        data: {
-            'new_entry_from': new_entry_from,
-            'new_entry_to': new_entry_to,
-            'new_entry_type': new_entry_type,
-            'new_entry_amount': new_entry_amount,
-            'new_entry_category': new_entry_category,
-            'new_entry_note': new_entry_note,
-            'new_entry_date': new_entry_date,
-        },
-        beforeSend: function () {
-            $('.loadingAnim').show();
-        },
-        success: function(data) {
-            hideModal()
-            console.log(data)
-            loadEntry()
-        }
-    })
+    if (new_entry_from==new_entry_to){
+        $('.selectedTab').find('.new_entry_from').val('')
+        $('.selectedTab').find('.new_entry_to').val('')
+        $('.alertCont').append(`<div class="alert alert-danger fade show text-center">Cannot transfer to same account. Please select different account.</div>`)
+        $('.alert').alert()
+        setTimeout(function(){
+            $('.alert').alert('close')},3000
+        )
+    }
+    else{
+        $.ajax({
+            type: 'POST',
+            url: 'addEntry',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            data: {
+                'new_entry_from': new_entry_from,
+                'new_entry_to': new_entry_to,
+                'new_entry_type': new_entry_type,
+                'new_entry_amount': new_entry_amount,
+                'new_entry_category': new_entry_category,
+                'new_entry_note': new_entry_note,
+                'new_entry_date': new_entry_date,
+            },
+            beforeSend: function () {
+                $('.loadingAnim').show();
+            },
+            success: function(data) {
+                hideModal()
+                loadEntry()
+            }
+        })
+    }
 }
 
 function editEntry(entry_id){
@@ -729,7 +736,7 @@ function editEntry(entry_id){
                     <div class='form-group row'>
                         <label for="edit_entry_amount" class="col-4 col-form-label">Amount</label>
                         <div class="col-8">
-                            <input class="form-control edit_entry_amount" value="${amount}" required>
+                            <input type='number' class="form-control edit_entry_amount" value="${amount}" required>
                         </div>
                     </div>
                     <div class='form-group row'>
@@ -745,9 +752,15 @@ function editEntry(entry_id){
                         </div>
                     </div>
                     <div class='form-group row'>
+                        <label for="edit_entry_date" class="col-4 col-form-label">Date</label>
+                        <div class="col-8">
+                            <input type='date' class="form-control edit_entry_date" required value='${entry_date}'></input>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
                         <label for="edit_entry_note" class="col-4 col-form-label">Note</label>
                         <div class="col-8">
-                            <input class="form-control edit_entry_note" value="${entry_note}" required>
+                            <input type='text' class="form-control edit_entry_note" value="${entry_note}" required>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Confirm</button>
@@ -799,6 +812,12 @@ function editEntry(entry_id){
                         <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
                         <div class="col-sm-8">
                             <select class="form-control edit_entry_category" required></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_date" class="col-4 col-form-label">Date</label>
+                        <div class="col-8">
+                            <input type='date' class="form-control edit_entry_date" required value='${entry_date}'></input>
                         </div>
                     </div>
                     <div class='form-group row'>
@@ -861,6 +880,12 @@ function editEntry(entry_id){
                         <label for="edit_entry_category" class="col-sm-4 col-form-label">Category</label>
                         <div class="col-sm-8">
                             <select class="form-control edit_entry_category" required></select>
+                        </div>
+                    </div>
+                    <div class='form-group row'>
+                        <label for="edit_entry_date" class="col-4 col-form-label">Date</label>
+                        <div class="col-8">
+                            <input type='date' class="form-control edit_entry_date" required value='${entry_date}'></input>
                         </div>
                     </div>
                     <div class='form-group row'>
@@ -952,6 +977,7 @@ function editEntryConfirm(){
             'edit_entry_pk': $('.edit_entry_pk').val(),
             'edit_entry_to': $('.edit_entry_to').val(),
             'edit_entry_from': $('.edit_entry_from').val(),
+            'edit_entry_date': $('.edit_entry_date').val(),
             'edit_entry_note': $('.edit_entry_note').val(),
             'edit_entry_amount': $('.edit_entry_amount').val(),
             'edit_entry_category': $('.edit_entry_category').val(),
@@ -964,7 +990,6 @@ function editEntryConfirm(){
             var entry_change_flag = JSON.parse(data.entry_change_flag)
             if (entry_change_flag == true) {
                 loadEntry()
-                console.log('changes')
             } else {
                 $('.loadingAnim').hide();
             }
@@ -985,7 +1010,6 @@ function deleteEntry(entry_id){
         success: function(data){
             hideModal()
             loadEntry()
-            console.log(data)
         },
     })
 }
@@ -1026,10 +1050,21 @@ function loadEntry(){
             var category = JSON.parse(data.category)
             var transaction = JSON.parse(data.transaction)
             var transaction_date = JSON.parse(data.transaction_date)
+            var transaction_category = JSON.parse(data.transaction_category)
             var message = data.message
-            console.log(accounts)
-            console.log(category)
-            console.log(transaction)
+
+            $('.filterCategory').html('')    
+            var insert = `<option value="" selected>All Category</option>`
+            $('.filterCategory').append(insert)
+
+            for (var i in transaction_category){
+                var category_pk = transaction_category[i].fields.category
+                if (category_pk){
+                    var category_name = lookUpCategory(category_pk, category)
+                    var insert = `<option value="${category_pk}">${category_name}</option>`
+                    $('.filterCategory').append(insert)
+                }
+            }
 
             $('.transactionDiv').html('')
             if (transaction==null||transaction.length==0) {
@@ -1092,8 +1127,7 @@ function loadEntry(){
                             `<div class="transactionDivSubSub divTransfer" style="display:flex; cursor:pointer;" transID="${transaction[y].pk}" data-toggle="modal" data-target=".indexModal" onclick="selectEntry(${transaction[y].pk})">
                                 <div class="transLeft">
                                     <span class="transType">Transfer</span>:
-                                    <span class="transCategory">${category_name}</span> from
-                                    (<span class="transAccount">${from_account_name}</span>) to
+                                    from (<span class="transAccount">${from_account_name}</span>) to
                                     (<span class="transAccount">${to_account_name}</span>)
                                     <span class="transNote">${transaction[y].fields.entryNote}</span>
                                 </div>
@@ -1139,7 +1173,6 @@ function convertDate(date) {
         var day = date.getDate()
     }
     conv_date = date.getFullYear() +'-'+ month +'-'+ day
-    // console.log(conv_date)
     return conv_date
 }
 
@@ -1228,3 +1261,25 @@ function lookUpCategory(pk, category){
         }
     }
 }
+
+function getDateDiff(d1, d2){
+    var t2 = d2.getTime();
+    var t1 = d1.getTime();
+    date_diff = parseInt((t2-t1)/(24*3600*1000));
+
+    var t2 = d2.getTime();
+    var t1 = d1.getTime();
+    week_diff =  parseInt((t2-t1)/(24*3600*1000*7));
+
+
+    var d1Y = d1.getFullYear();
+    var d2Y = d2.getFullYear();
+    var d1M = d1.getMonth();
+    var d2M = d2.getMonth();
+    month_diff = (d2M+12*d2Y)-(d1M+12*d1Y);
+
+    year_diff = d2.getFullYear()-d1.getFullYear();
+
+    return [date_diff, week_diff, month_diff, year_diff]
+}
+

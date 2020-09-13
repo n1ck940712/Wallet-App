@@ -1,5 +1,5 @@
 {% extends 'walletapp/layout.html' %}
-{% block title %}Index Page{% endblock %}
+{% block title %}Wallet | Transaction{% endblock %}
 {% block body %}
 {% csrf_token %}
 {% load mathfilters %}
@@ -13,12 +13,7 @@
                     <input class="filterNote form-control" placeholder="Filter Note" autocomplete="off">
                 </div>
                 <div class="form-group">
-                    <select class="filterCategory form-control">
-                        <option value="" selected>All Category</option>
-                        {% for item in category %}
-                        <option value="{{item.pk}}">{{item.categoryName|title}}</option>
-                        {% endfor %}
-                    </select>
+                    <select class="filterCategory form-control"></select>
                 </div>
                 <div class="form-group">
                     <select class="filterAccount form-control">
@@ -95,7 +90,7 @@
                 <form class="tabContent incomeForm text-center" action="javascript:addEntry();">
                     <input type="hidden" class="new_entry_type">
                     <div class="form-group">
-                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
+                        <input type="number" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <select class="form-control new_entry_to" required>
@@ -124,7 +119,7 @@
                 <form class="tabContent expenseForm text-center" action="javascript:addEntry();">
                     <input type="hidden" class="new_entry_type">
                     <div class="form-group">
-                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
+                        <input type="number" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <select class="form-control new_entry_from" required>
@@ -154,7 +149,7 @@
                     <input type="hidden" class="new_entry_category" name="new_entry_category" value="transfer">
                     <input type="hidden" class="new_entry_type" name="new_entry_type" value="transfer">
                     <div class="form-group">
-                        <input type="text" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
+                        <input type="number" class="form-control new_entry_amount" placeholder="Amount" autocomplete="off" required>
                     </div>
                     <div class="form-group">
                         <select class="form-control new_entry_from" required>

@@ -10,7 +10,7 @@
         <script src="{% static 'walletapp/jquery-3.5.1/jquery.min.js' %}" charset="utf-8"></script>
         <script src="{% static 'walletapp/bootstrap-4.3.1-dist/js/bootstrap.min.js' %}" charset="utf-8"></script>
         <script src="{% static 'walletapp/app.js' %}" charset="utf-8"></script>
-        <title>{% block title %}{% endblock %}</title>
+        <title>Wallet | Login</title>
     </head>
     <body class="loginBody">
         <div class="alertCont">
@@ -39,7 +39,7 @@
             <button class="btn btn-lg btn-primary btn-block loginButton form-group" type="submit">Login</button>
                     <div class="checkbox mb-3">
                         <label>
-                            <input type="checkbox" value="remember-me"> Remember me
+                            <input type="checkbox" name="remember-me"> Remember me
                         </label>
                     </div>
             <p>Looking to <a href="#" data-toggle="modal" data-target=".regModal"><strong>create an account </strong></a>?</p>

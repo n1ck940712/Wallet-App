@@ -1,5 +1,5 @@
 {% extends 'walletapp/layout.html' %}
-{% block title %}Settings{% endblock %}
+{% block title %}Wallet | Settings{% endblock %}
 {% block body %}
 {% csrf_token %}
 {% load static %}
@@ -55,7 +55,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form class="modal-body text-center" action="javascipt:addCategory();">
+            <form class="modal-body text-center" action="javascript:addCategory();">
                 <div class="inviForm"></div>
                 <div class="form-group">
                     <input class="form-control add_category_name" placeholder="Name" required>
@@ -111,7 +111,7 @@
                     <input class="form-control add_account_name" placeholder="Account Name" required>
                 </div>
                 <div class="form-group">
-                    <input type="text" class="form-control add_account_balance" placeholder="Account Balance" required>
+                    <input type="number" class="form-control add_account_balance" placeholder="Account Balance" required>
                 </div>
                 <div class="form-group">
                     <select class="form-control add_account_type" required>
@@ -145,7 +145,7 @@
                 </div>
                 <div class="form-group row">
                     <label for="edit_account_balance" class="col-4 col-form-label">Account Balance</label>
-                    <input class="form-control edit_account_balance col-8" required>
+                    <input type="number" class="form-control edit_account_balance col-8" required>
                 </div>
                 <div class="form-group row">
                     <label for="edit_account_type" class="col-4 col-form-label">Account Type</label>

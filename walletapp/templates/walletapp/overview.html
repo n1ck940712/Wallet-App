@@ -1,5 +1,5 @@
 {% extends 'walletapp/layout.html' %}
-{% block title %}Overview{% endblock %}
+{% block title %}Wallet | Overview{% endblock %}
 {% block body %}
 {% load static %}
 
@@ -14,12 +14,12 @@
                 <!-- filter -->
                 <input type="hidden" class="filterDateStart" value="">
                 <input type="hidden" class="filterDateEnd" value="">
-                <select class="accountSelect form-control">
+                <select class="accountSelect form-control form-group">
                     {% for item in accounts %}
                     <option value="{{item.pk}}">{{item.accountName|title}} - Balance: ${{item.accountBalance}}</option>
                     {% endfor %}
                 </select>
-                <input type="text" class="filterDate form-control">
+                <input type="text" class="filterDate form-control form-group">
                 <div class="summaryContainerSub divIncome">
                     <div>Total Income</div>
                     <div class="totalIncome"></div>
